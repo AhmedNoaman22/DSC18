@@ -15,7 +15,7 @@ class ProjectProject(models.Model):
         return val
 
     def create_project_budget(self):
-        budget_obj = self.env['budget.budget']
+        budget_obj = self.env['project.budget']
         for rec in self:
             val = rec.project_budget_vals()
             res = budget_obj.sudo().create(val)
@@ -28,9 +28,9 @@ class HrDepartment(models.Model):
     hour_cost = fields.Float(string='Hour Cost')
 
 
-class BudgetModel(models.Model):
-    _name = 'budget.budget'
-    _description = 'budget model'
+class ProjectBudgetModel(models.Model):
+    _name = 'project.budget'
+    _description = 'project budget model'
 
     name = fields.Char(string="Name", required=True)
     company_id = fields.Many2one(comodel_name='res.company', default='lambda self: self.env.user.company_id.id',
@@ -39,15 +39,15 @@ class BudgetModel(models.Model):
     date_to = fields.Date(string="Date To")
     project_id = fields.Many2one(comodel_name='project.project', string="Project")
     note = fields.Html(string='Note')
-    budget_line_ids = fields.One2many(comodel_name='budget.line', inverse_name='budget_id', string="Budget Line")
+    budget_line_ids = fields.One2many('project.budget.line', 'budget_id', string="Budget Line")
 
 
 class BudgetLine(models.Model):
-    _name = 'budget.line'
-    _description = 'budget line'
+    _name = 'project.budget.line'
+    _description = 'project budget line'
 
     name = fields.Char(string="Name")
-    budget_id = fields.Many2one(comodel_name='budget.budget', string="Budget")
+    budget_id = fields.Many2one('project.budget', string="Budget")
     department_id = fields.Many2one(comodel_name="hr.department", string="Department")
     hour_cost = fields.Float(string='Department Hour Cost', related="department_id.hour_cost", store=True)
     task_planned_hours = fields.Float(string='Budget Hours')

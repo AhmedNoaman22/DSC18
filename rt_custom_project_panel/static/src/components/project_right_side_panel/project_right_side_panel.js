@@ -29,7 +29,7 @@ patch(ProjectRightSidePanel.prototype, {
     async onBudgetItemActionClick(_id) {
         return this.actionService.doAction({
                 type: "ir.actions.act_window",
-                res_model: 'budget.budget',
+                res_model: 'project.budget',
                 res_id: _id,
                 views: [[false, "form"]],
                 target: "current"
@@ -39,7 +39,7 @@ patch(ProjectRightSidePanel.prototype, {
     async onBudgetItemActionListClick(_ids) {
         return this.actionService.doAction({
                 type: "ir.actions.act_window",
-                res_model: 'budget.budget',
+                res_model: 'project.budget',
                 views: [[false, "list"]],
                 target: "current",
                 domain: [["id", "in", _ids]]

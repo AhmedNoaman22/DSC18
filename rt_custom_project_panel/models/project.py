@@ -24,9 +24,9 @@ class CustomProject(models.Model):
 
     def _get_custom_budget_items(self):
         domain = [('project_id', '=', self.id)]
-        rec = self.env['budget.budget'].search(domain, limit=100)
+        rec = self.env['project.budget'].search(domain, limit=100)
         return {
-            'total': self.env['budget.budget'].sudo().search_count(domain),
+            'total': self.env['project.budget'].sudo().search_count(domain),
             'data': {},
             # 'data': rec.read(['id']),
             'data': rec.read(['id', 'name', 'phase_id', 'date_from', 'date_to']),

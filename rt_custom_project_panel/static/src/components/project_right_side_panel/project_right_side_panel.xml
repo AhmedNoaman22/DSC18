@@ -2,7 +2,7 @@
 <templates id="template" xml:space="preserve">
 
     <t t-name="rt_custom_project_panel.ProjectRightSidePanel" t-inherit="project.ProjectRightSidePanel" t-inherit-mode="extension">
-        <xpath expr="//ProjectRightSidePanelSection[@name=&quot;'sales'&quot;]" position="before">
+        <xpath expr="//ProjectRightSidePanelSection" position="inside">
             <ProjectRightSidePanelSection name="'phase'" show="!!state.data.phase_items?.data" dataClassName="'py-3'">
                 <t t-set-slot="title">
                     <a  class="o_rightpanel_button" href="#" t-on-click="() => this.onPhaseItemActionListClick(state.data.phase_items.rec_ids)">
@@ -76,7 +76,5 @@
                 </table>
             </ProjectRightSidePanelSection>
         </xpath>
-
     </t>
-
 </templates>

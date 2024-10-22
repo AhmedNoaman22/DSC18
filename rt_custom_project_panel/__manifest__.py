@@ -10,11 +10,11 @@
     'website': "https://www.rightechs.net",
 
     'category': 'Project',
-    'version': '18.0',
+    'version': '1.0',
 
     # any module necessary for this one to work correctly
     'depends': [
-        'base', 'project', 'account_budget',
+        'base', 'project',
         'account', 'stock', 'sale_timesheet',
         'sale', 'sale_project', 'timesheet_grid',
         'purchase', 'account_accountant'],
