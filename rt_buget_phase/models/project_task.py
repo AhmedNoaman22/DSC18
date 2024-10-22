@@ -14,8 +14,8 @@ class ProjectTask(models.Model):
     budget_id = fields.Many2one('project.budget', 'Budget',)
     department_id = fields.Many2one('hr.department', 'Department',)
     allow_task_timesheet = fields.Boolean(string='Lock Task TimeSheet', default=lambda self: True if self.parent_id.allow_task_timesheet == True else False, copy=False, store=True)
-    allocated_time_edit = fields.Boolean(default=lambda self: True if self.env['res.users'].has_group('rt_buget_phase.group_project_task_allocated_time') else False, copy=False, compute='_compute_allocated_time_edit')
-    allow_task_timesheet_edit = fields.Boolean(default=lambda self: True if self.env['res.users'].has_group('rt_buget_phase.group_hr_lock_timesheet_hours_spent') else False, copy=False, compute='_compute_allocated_time_edit')
+    allocated_time_edit = fields.Boolean(default=lambda self: True if self.env.user.has_group('rt_buget_phase.group_project_task_allocated_time') else False, copy=False, compute='_compute_allocated_time_edit')
+    allow_task_timesheet_edit = fields.Boolean(default=lambda self: True if self.env.user.has_group('rt_buget_phase.group_hr_lock_timesheet_hours_spent') else False, copy=False, compute='_compute_allocated_time_edit')
 
     parent_id = fields.Many2one('project.task', string='Parent Task', index=True, domain="['!', ('id', 'child_of', id)]", tracking=True)
     child_ids = fields.One2many('project.task', 'parent_id', string="Sub-tasks", domain="[('recurring_task', '=', False)]")
