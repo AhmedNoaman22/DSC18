@@ -4,9 +4,6 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
-from odoo.odoo.api import ondelete
-
-
 class ProductTemplate(models.Model):
     _inherit = "product.template"
     _description = 'Product Template Inherit'
