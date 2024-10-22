@@ -12,7 +12,7 @@ class AccountAnalyticLine(models.Model):
     #     compute='_compute_task_id', store=True, readonly=False, required=True,
     #     domain="[('allow_timesheets', '=', True), ('project_id', '=?', project_id), ('allow_task_timesheet', '=', False), ('parent_id.allow_task_timesheet', '=', False)]")
 
-    hours_spent_edit = fields.Boolean(default=lambda self: True if self.env['res.users'].has_group(
+    hours_spent_edit = fields.Boolean(default=lambda self: True if self.env.user.has_group(
         'rt_buget_phase.group_project_task_allocated_time') else False, copy=False, compute='_compute_hours_spent_edit')
 
     # @api.depends('effective_hours', 'subtask_effective_hours', 'allocated_hours')
