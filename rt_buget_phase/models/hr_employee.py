@@ -3,9 +3,6 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import RedirectWarning, UserError, ValidationError
 
-from odoo.odoo.api import readonly
-
-
 class HrEmployee(models.Model):
     _inherit = 'hr.employee'
     _description = 'Hr Employee Inherit'
