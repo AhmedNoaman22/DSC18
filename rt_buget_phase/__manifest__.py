@@ -15,7 +15,7 @@
     'category': 'Project',
     'version': '1.0',
 
-    'depends': ['base', 'project', 'hr_timesheet', 'analytic', 'hr', 'rt_project_phase', 'rt_budget', 'timesheet_grid'],
+    'depends': ['base', 'project', 'hr_timesheet', 'analytic', 'hr', 'hr_hourly_cost', 'rt_project_phase', 'rt_budget', 'timesheet_grid'],
 
     # always loaded
     'data': [
@@ -26,6 +26,7 @@
         'views/project_phase_view.xml',
         'views/project_task_view.xml',
         'views/project_milestone_view.xml',
+        'views/hr_employee_views.xml',
         'views/hr_timesheet_views.xml',
     ],
     "installable": True,

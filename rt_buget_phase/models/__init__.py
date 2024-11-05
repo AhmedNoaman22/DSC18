@@ -7,3 +7,4 @@ from . import project_phase
 from . import project_task
 from . import hr_timesheet
 from . import hr_employee
+from . import hr_department
