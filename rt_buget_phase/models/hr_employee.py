@@ -3,6 +3,8 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import RedirectWarning, UserError, ValidationError
 
+from odoo.odoo.api import readonly
+
 
 class HrEmployee(models.Model):
     _inherit = 'hr.employee'
@@ -11,7 +13,7 @@ class HrEmployee(models.Model):
     total_hours_monthly = fields.Float('Total Hours Monthly',
         groups="hr.group_hr_user", default=176.0)
     hourly_cost = fields.Monetary('Hourly Cost', currency_field='currency_id',
-        groups="hr.group_hr_user", default=1.0, compute='_compute_hourly_cost')
+        groups="hr.group_hr_user", default=1.0, compute='_compute_hourly_cost', readonly=False)
 
     @api.depends('contract_id','contract_id.wage')
     def _compute_hourly_cost(self):
