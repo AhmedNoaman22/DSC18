@@ -13,7 +13,7 @@ class HrDepartment(models.Model):
     @api.depends('member_ids','member_ids.hourly_cost')
     def _compute_hour_cost(self):
         for rec in self:
-            dep_employees = self.env['hr.employee'].sudo().search([('department_id','=',self.id),('contract_id.state','=','open')])
+            dep_employees = self.env['hr.employee'].sudo().search([('id','in',rec.member_ids.ids),('contract_id.state','=','open')])
             if dep_employees:
                 rec.hour_cost = sum(dep_employees.mapped('hourly_cost')) / len(dep_employees)
             else:

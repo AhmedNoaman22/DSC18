@@ -28,6 +28,7 @@
         'views/project_milestone_view.xml',
         'views/hr_employee_views.xml',
         'views/hr_timesheet_views.xml',
+        'data/target_hours_entry_type_data.xml',
     ],
     "installable": True,
 }

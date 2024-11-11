@@ -6,6 +6,10 @@
         <field name="inherit_id" ref="hr.view_employee_form"/>
         <field name="arch" type="xml">
             <xpath expr="//group[@name='application_group']" position="inside">
+                <label for="target_hours"/>
+                <div name="target_hours">
+                    <field name="target_hours" class="oe_inline"/>
+                </div>
                 <label for="total_hours_monthly"/>
                 <div name="total_hours_monthly">
                     <field name="total_hours_monthly" class="oe_inline"/>
