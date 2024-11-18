@@ -106,6 +106,16 @@
                                     </div>
                                 </group>
                             </page>
+                            <page name="additional_flex_hours" string="Additional Flexible Hours">
+                                <field name="additional_flexible_line">
+                                    <list string="Additional Flexible Hours" editable="bottom">
+                                        <field name="from_time" required="1"/>
+                                        <field name="to_time" required="1"/>
+                                        <field name="flex_hours" required="1"/>
+                                        <field name="penalty_id" invisible="1"/>
+                                    </list>
+                                </field>
+                            </page>
                         </notebook>
                     </sheet>
                 </form>

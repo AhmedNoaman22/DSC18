@@ -99,6 +99,8 @@ class hr_penalty(models.Model):
     no_sign_in_time = fields.Selection([('hours', 'Hours'), ('days', 'Days')], 'Absent Time')
     no_sign_out_time = fields.Selection([('hours', 'Hours'), ('days', 'Days')], 'Absent Time')
     absent_penalty_lines = fields.One2many('hr.penalty.absent.line', 'penalty_id', 'Penalty')
+    additional_flexible_line = fields.One2many('additional.flexible.hours', 'penalty_id',
+                                               'Additional Flexible Line')
 
 
 class hr_penalty_line(models.Model):
@@ -124,6 +126,50 @@ class hr_penalty_line(models.Model):
         if self.penalty_type:
             if self.penalty_type != 'same_delay':
                 self.multiple = 0.0
+
+
+
+class additional_flexible_hours(models.Model):
+    _name = 'additional.flexible.hours'
+    _description = "Additional Flexible Hours"
+    _order = 'from_time'
+
+    from_time = fields.Float('From Time')
+    to_time = fields.Float('To Time')
+    flex_hours = fields.Float('Additional Flexible Hours')
+    penalty_id = fields.Many2one('hr.penalty', 'Penalty')
+
+    @api.onchange('from_time', 'to_time')
+    def oncahnge_time(self):
+        if self.from_time and self.to_time and self.from_time > self.to_time:
+            raise Warning(_("From Time can not be grater than To Time"))
+
+        str_fromtime = str(self.from_time)
+        str_totime = str(self.to_time)
+
+        fromhr = str_fromtime.split('.')[0]
+        frommin = str_fromtime.split('.')[1]
+        tohr = str_totime.split('.')[0]
+        tomin = str_totime.split('.')[1]
+
+        if len(frommin) == 1:
+            frommin = frommin + '0'
+        if len(tomin) == 1:
+            tomin = tomin + '0'
+
+        if int(fromhr) >= 24:
+            self.from_time = False
+            raise UserError(_("From Time Hours can not be equal or greater than 24."))
+        if int(tohr) >= 24:
+            self.to_time = False
+            raise UserError(_("To Time Hours can not be equal or greater than 24."))
+        if int(frommin) >= 60:
+            self.from_time = False
+            raise UserError(_("From Time Minutes can not be equal or greater than 60."))
+        if int(tomin) >= 60:
+            self.to_time = False
+            raise UserError(_("To Time Minutes can not be equal or greater than 60."))
+
 
 
 class hr_attendance(models.Model):
