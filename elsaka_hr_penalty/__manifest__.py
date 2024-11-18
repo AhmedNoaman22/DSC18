@@ -23,7 +23,7 @@
     'name': 'Elsaka HR Penalty KSA',
     'version': '17.0',
     'category': 'Human Resources',
-    'description': """
+    'description': """ Human Resources for penalty on employee
     """,
     'author': 'Ahmed Elsaka',
     'website': 'https://www.elsaka.com',

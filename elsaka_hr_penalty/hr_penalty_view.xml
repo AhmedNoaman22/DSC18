@@ -276,6 +276,11 @@
                                     <field name="note" />
                                     <button name="action_waive" string="Toggle Waive" type="object" class="oe_link" invisible="dont_show != False" />
                                     <field name="dont_show" invisible="1" />
+                                    <field name="first_signin"/>
+                                    <field name="last_signout"/>
+                                    <field name="allowed_nextday"/>
+                                    <field name="odd_action" invisible="1"/>
+                                    <field name="travel_alw"/>
                                 </list>
                             </field>
                             <group col="4">
