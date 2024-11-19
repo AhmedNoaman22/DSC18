@@ -1379,11 +1379,13 @@ class employee_delay(models.Model):
             ('employee_id', '=', this.employee_id.id),
             ('check_out', '>=', key + ' 00:00:01'),
             ('check_out', '<=', key + ' 23:59:59')], order="check_out DESC")
+        print(f"Last Attendance === > {last_att_ids}")
         first_att_ids = attendance_pool.search([
             ('employee_id', '=', this.employee_id.id),
             ('check_in', '>=', key + ' 00:00:01'),
             ('check_in', '<=', key + ' 23:59:59')], order="check_in ASC")
         # time_zone = context.has_key("tz") and context['tz'] or "Africa/Cairo" if context else "Africa/Cairo"
+        print(f"First Attendance === > {first_att_ids}")
         if first_att_ids:
             sign_date = attendance_pool.browse(first_att_ids[0]).check_in
             sign_date = self.convert_datetime_to_tz(sign_date)
