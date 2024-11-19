@@ -15,29 +15,8 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
 #
 ##############################################################################
+from . import update_company
 
-{
-    'name': 'Elsaka HR Penalty KSA',
-    'version': '17.0',
-    'category': 'Human Resources',
-    'description': """ Human Resources for penalty on employee
-    """,
-    'author': 'Ahmed Elsaka',
-    'website': 'https://www.elsaka.com',
-    'depends': ['hr_attendance', 'hr', 'hr_contract', 'elsaka_hr_contract', 'elsaka_hr_shifts', 'elsaka_hr_leaves',
-                'hr_payroll','hr_attendance','hr_timesheet', 'hr_payroll'],
-    'data': [
-        'hr_penalty_view.xml',
-        'data.xml',
-		'wizard/batch_deduction_view.xml',
-        'security/ir_rule.xml',
-        'security/ir.model.access.csv',
-        'data/salary_rule_data.xml',
-    ],
-    'demo': [],
-    'installable': True,
-    'auto_install': False,
-}

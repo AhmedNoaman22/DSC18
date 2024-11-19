@@ -579,7 +579,8 @@ class employee_delay(models.Model):
                 ('mode', '=', 'tag')] + domain_date, order="id DESC")
         if not penalty_rule_ids:
             raise UserError(_('Warning! No Penalty Rule found.'))
-        penalty_rule = penalty_rule_pool.browse(penalty_rule_ids[0])
+        penalty_rule = penalty_rule_ids[0]
+        print(f'penalty_rule =========== {penalty_rule}')
         return penalty_rule
 
     def calc_delay(self):
@@ -674,7 +675,7 @@ class employee_delay(models.Model):
                                                            shift_line.shift_id.total_working_hours - shift_line.shift_id.break_hours))) or 0.0  # Assuming 22 day of a month
 
                 next_day_data = self.get_next_day_allowed_time(attendance_pool,
-                                                               this, key, shift_line, penalty_rule)
+                                                               this, key, penalty_rule)
                 first_signin = next_day_data[2]
                 last_signout = next_day_data[0]
                 print(f"first sign in ==== {first_signin}")
@@ -1235,7 +1236,7 @@ class employee_delay(models.Model):
         for line in penalty_rule:
             penalty_id = line
         absent_line_ids = penalty_absent_line_pool.search([
-            ('penalty_id', '=', penalty_id.id.id)])
+            ('penalty_id', '=', penalty_id.id)])
         if absent_line_ids:
             absent_line_ids = absent_line_ids[0]
             # print('penalty_linnnnnnnnnes ==== ',absent_line_ids.penalty_id.name)
@@ -1371,7 +1372,7 @@ class employee_delay(models.Model):
         return odd_action
 
     def get_next_day_allowed_time(self, attendance_pool, this, key,
-                                  shift_line, penalty_rule):
+                                  penalty_rule):
         first_signin = "00:00:00"
         last_signout = "00:00:00"
         allowed_nextday = 0.0
@@ -1387,20 +1388,21 @@ class employee_delay(models.Model):
         # time_zone = context.has_key("tz") and context['tz'] or "Africa/Cairo" if context else "Africa/Cairo"
         print(f"First Attendance === > {first_att_ids}")
         if first_att_ids:
-            sign_date = attendance_pool.browse(first_att_ids[0]).check_in
+            sign_date = first_att_ids[0].check_in
+            print(f"First sign_date === > {sign_date}")
             sign_date = self.convert_datetime_to_tz(sign_date)
             first_signin = sign_date.split(' ')[1]
         if last_att_ids:
-            temp_date = attendance_pool.browse(last_att_ids[0]).check_out
+            temp_date = last_att_ids[0].check_out
             temp_date = self.convert_datetime_to_tz(temp_date)
             last_signout = temp_date.split(' ')[1]
             temp_lastout = float(last_signout[:5].replace(':', '.'))
-            flex_pool = self.pool.get("additional.flexible.hours")
+            flex_pool = self.env["additional.flexible.hours"]
             flex_ids = flex_pool.search([('penalty_id', '=', penalty_rule.id),
                                                   ('from_time', '<=', temp_lastout),
                                                   ('to_time', '>=', temp_lastout)])
             if flex_ids:
-                allowed_nextday = flex_pool.browse(flex_ids[0]).flex_hours
+                allowed_nextday = flex_ids[0].flex_hours
         return [last_signout, allowed_nextday, first_signin]
 
     def get_float_time(self, str_date):
