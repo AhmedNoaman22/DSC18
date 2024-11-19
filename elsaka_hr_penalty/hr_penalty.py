@@ -543,7 +543,7 @@ class employee_delay(models.Model):
 
     def get_working_hours(self,key, employee_id, shift_line, value=[],
                           rest_day=False, holiday=False, no_in_out=False):
-        att_pool = self.pool.get('hr.attendance')
+        att_pool = self.env['hr.attendance']
         shift_hours = shift_line and shift_line.shift_id and shift_line.shift_id.total_working_hours or 0.0
 
         # REST DAY
@@ -562,8 +562,8 @@ class employee_delay(models.Model):
             working = shift_hours and shift_hours / 2 or 0.0
             return working
 
-    def get_penalty_rule(self, this, key, context={}):
-        penalty_rule_pool = self.pool.get('hr.penalty')
+    def get_penalty_rule(self, this, key):
+        penalty_rule_pool = self.env['hr.penalty']
         domain_date = [('date_from', '<=', key), ('date_to', '>=', key)]
         penalty_rule_ids = penalty_rule_pool.search([
             ('employee_id', 'in', [this.employee_id.id]),
@@ -578,9 +578,8 @@ class employee_delay(models.Model):
                 ('tag_id', 'in', tag_ids),
                 ('mode', '=', 'tag')] + domain_date, order="id DESC")
         if not penalty_rule_ids:
-            raise UserError(_('Warning!'),
-                                 _('No Penalty Rule found.'))
-        penalty_rule = penalty_rule_pool.browse(penalty_rule_ids[0], context)
+            raise UserError(_('Warning! No Penalty Rule found.'))
+        penalty_rule = penalty_rule_pool.browse(penalty_rule_ids[0])
         return penalty_rule
 
     def calc_delay(self):
@@ -638,7 +637,7 @@ class employee_delay(models.Model):
             for key, value in datewise_data.items():
                 # print "\n\nKEY : VALUE ======================================================> ",key,value
 
-                penalty_rule = self.get_penalty_rule(this, key, self.env.context)
+                penalty_rule = self.get_penalty_rule(this, key)
 
                 # shift data
                 assign_shift_line_ids = patch_delay_cal_pool.get_employee_shift(
@@ -675,7 +674,7 @@ class employee_delay(models.Model):
                                                            shift_line.shift_id.total_working_hours - shift_line.shift_id.break_hours))) or 0.0  # Assuming 22 day of a month
 
                 next_day_data = self.get_next_day_allowed_time(attendance_pool,
-                                                               this, key, shift_line, penalty_rule, self.env.context)
+                                                               this, key, shift_line, penalty_rule)
                 first_signin = next_day_data[2]
                 last_signout = next_day_data[0]
                 allowed_nextday = next_day_data[1]
@@ -708,9 +707,7 @@ class employee_delay(models.Model):
 
                     self.create_line(key, 0.0, 'rest_day', False,
                                      permission, permission_hrs, actual_delay, ded_applied,
-                                     deduction, worked_hours, note, working, shift_line,
-                                     this, penalty_rule, last_signout, allowed_nextday, first_signin, travel_alw,
-                                     self.env.context)
+                                     deduction, worked_hours, note, working)
                     continue
 
                 # IF NO ATRENDANCE DATA FOUND
@@ -733,9 +730,7 @@ class employee_delay(models.Model):
                         deduction = ded_applied * per_hour
                         self.create_line(key, 0.0,
                                          type, False, permission, permission_hrs, actual_delay,
-                                         ded_applied, deduction, worked_hours, note, working,
-                                         shift_line, this, penalty_rule, last_signout, allowed_nextday, first_signin,
-                                         travel_alw)
+                                         ded_applied, deduction, worked_hours, note, working)
                         continue
 
                     for leave in holiday_ids:
@@ -753,9 +748,7 @@ class employee_delay(models.Model):
                                 if element == key:
                                     self.create_line(element, 0.0,
                                                      type, False, permission, permission_hrs, actual_delay,
-                                                     ded_applied, deduction, worked_hours, note, working,
-                                                     shift_line, this, penalty_rule, last_signout, allowed_nextday,
-                                                     first_signin, travel_alw,)
+                                                     ded_applied, deduction, worked_hours, note, working)
                             continue
 
                         # CHECK IF UNPAID LEAVE
@@ -768,9 +761,7 @@ class employee_delay(models.Model):
                                 deduction = ded_applied * per_hour
                                 self.create_line(key, 0.0,
                                                  type, False, permission, permission_hrs, actual_delay, ded_applied,
-                                                 deduction, worked_hours, note, working, shift_line,
-                                                 this, penalty_rule, last_signout, allowed_nextday, first_signin,
-                                                 travel_alw)
+                                                 deduction, worked_hours, note, working)
                     continue
 
                 # CHECK PERMISSION EXISTS OR NOT
@@ -827,9 +818,7 @@ class employee_delay(models.Model):
                                                                       this.employee_id.id)
                         working = shift_line.shift_id.total_working_hours
                         self.create_line(key, 0.0, 'leaves',
-                                         'no', 0.0, 0.0, 0.0, 0.0, worked_hours, note, working,
-                                         shift_line, this, penalty_rule, last_signout, allowed_nextday, first_signin,
-                                         travel_alw)
+                                         'no', 0.0, 0.0, 0.0, 0.0, worked_hours, note, working)
                         public_leave = True
                         continue
                     if leave.request_unit_half and not leave.holiday_status_id.unpaid and \
@@ -889,8 +878,7 @@ class employee_delay(models.Model):
                     deduction = ded_applied * per_hour
                     self.create_line(key, 0.0, type, False,
                                      permission, permission_hrs, actual_delay, ded_applied,
-                                     deduction, worked_hours, note, working, shift_line,
-                                     this, penalty_rule, last_signout, allowed_nextday, first_signin, travel_alw)
+                                     deduction, worked_hours, note, working)
                     continue
 
                 if sign_out:
@@ -907,8 +895,7 @@ class employee_delay(models.Model):
                     deduction = ded_applied * per_hour
                     self.create_line(key, 0.0, False,
                                      False, permission, permission_hrs, actual_delay, ded_applied,
-                                     deduction, worked_hours, note, working, shift_line, this,
-                                     penalty_rule, last_signout, allowed_nextday, first_signin, travel_alw)
+                                     deduction, worked_hours, note, working)
                     continue
 
                     # WORKED HOURS
@@ -964,8 +951,7 @@ class employee_delay(models.Model):
                     deduction = time_diff * per_hour
                     self.create_line(key, time_diff, type, False,
                                      permission, permission_hrs, actual_delay, ded_applied,
-                                     deduction, worked_hours, note, working, shift_line,
-                                     this, penalty_rule, last_signout, allowed_nextday, first_signin, travel_alw)
+                                     deduction, worked_hours, note, working)
                     # print "1. : time_diff===========> ",time_diff
                 elif signin_penalty and not signout_penalty:
                     time_diff = signin_penalty
@@ -976,8 +962,7 @@ class employee_delay(models.Model):
                     deduction = ded_applied * per_hour
                     self.create_line(key, time_diff, type, penalty,
                                      permission, permission_hrs, actual_delay, ded_applied,
-                                     deduction, worked_hours, note, working, count, shift_line,
-                                     this, penalty_rule, last_signout, allowed_nextday, first_signin, travel_alw)
+                                     deduction, worked_hours, note, working, count)
                     # print "2. : signoin_penalty===========> ",time_diff
                     if halfday_leave_unpaid:
                         ded_applied = self.convert_time_to_float(halfday_leave_unpaid)
@@ -985,8 +970,7 @@ class employee_delay(models.Model):
                         note = "Half Day Leave"
                         self.create_line(key, 0.0, 'leaves',
                                          permission, permission_hrs, 0.0, ded_applied, deduction,
-                                         0.0, note, 0.0, shift_line, this, penalty_rule, last_signout, allowed_nextday,
-                                         first_signin, travel_alw)
+                                         0.0, note, 0.0)
 
                 elif not signin_penalty and signout_penalty:
                     # str(int(signout_penalty)) + '.' + str(10 - int(str(signout_penalty).split('.')[1]))
@@ -1020,8 +1004,7 @@ class employee_delay(models.Model):
                     deduction = ded_applied * per_hour
                     self.create_line(key, time_diff, type, penalty,
                                      permission, permission_hrs, actual_delay, ded_applied,
-                                     deduction, worked_hours, note, working,  shift_line,
-                                     this, penalty_rule, last_signout, allowed_nextday, first_signin, travel_alw)
+                                     deduction, worked_hours, note, working)
                     # print "3. : signout_penalty===========> ",time_diff
                     if halfday_leave_unpaid:
                         ded_applied = self.convert_time_to_float(halfday_leave_unpaid)
@@ -1029,8 +1012,7 @@ class employee_delay(models.Model):
                         note = "Half Day Leave"
                         self.create_line(key, 0.0, 'leaves',
                                          permission, permission_hrs, 0.0, ded_applied, deduction,
-                                         0.0, note, 0.0, shift_line, this, penalty_rule, last_signout,
-                                         allowed_nextday, first_signin, travel_alw)
+                                         0.0, note, 0.0)
                     # print "3. : signout_penalty===========> ", time_diff
                 else:
                     loop = True
@@ -1045,8 +1027,7 @@ class employee_delay(models.Model):
                         deduction = ded_applied * per_hour
                         self.create_line(key, time_diff, type, penalty,
                                          permission, permission_hrs, actual_delay, ded_applied,
-                                         deduction, worked_hours, note, working, count, shift_line,
-                                         this, penalty_rule, last_signout, allowed_nextday, first_signin, travel_alw)
+                                         deduction, worked_hours, note, working, count)
                         # print "4. : ===========> ",k,time_diff
                         # print "4. : ===========> ", k, time_diff
                     if halfday_leave_unpaid:
@@ -1055,8 +1036,7 @@ class employee_delay(models.Model):
                         note = "Half Day Leave"
                         self.create_line(key, 0.0, 'leaves',
                                          permission, permission_hrs, 0.0, ded_applied, deduction,
-                                         worked_hours, note, working, shift_line, this, penalty_rule, last_signout,
-                                         allowed_nextday, first_signin, travel_alw)
+                                         worked_hours, note, working)
 
         return True
 
@@ -1249,7 +1229,7 @@ class employee_delay(models.Model):
         for line in penalty_rule:
             penalty_id = line
         absent_line_ids = penalty_absent_line_pool.search([
-            ('penalty_id', '=', penalty_id.id)])
+            ('penalty_id', '=', penalty_id.id.id)])
         if absent_line_ids:
             absent_line_ids = absent_line_ids[0]
             # print('penalty_linnnnnnnnnes ==== ',absent_line_ids.penalty_id.name)
@@ -1361,37 +1341,35 @@ class employee_delay(models.Model):
         edl_id = employee_delay_line_pool.create(employee_delay_line_data)
         return edl_id
 
-    def get_next_day_allowed_time(self, cr, uid, attendance_pool, this, key,
-                                  shift_line, penalty_rule, context=None):
+    def get_next_day_allowed_time(self, attendance_pool, this, key,
+                                  shift_line, penalty_rule):
         first_signin = "00:00:00"
         last_signout = "00:00:00"
         allowed_nextday = 0.0
-        last_att_ids = attendance_pool.search(cr, uid, [
+        last_att_ids = attendance_pool.search([
             ('employee_id', '=', this.employee_id.id),
-            ('name', '>=', key + ' 00:00:01'),
-            ('name', '<=', key + ' 23:59:59'),
-            ('action', '=', 'sign_out')], order="name DESC")
-        first_att_ids = attendance_pool.search(cr, uid, [
+            ('check_out', '>=', key + ' 00:00:01'),
+            ('check_out', '<=', key + ' 23:59:59')], order="check_out DESC")
+        first_att_ids = attendance_pool.search([
             ('employee_id', '=', this.employee_id.id),
-            ('name', '>=', key + ' 00:00:01'),
-            ('name', '<=', key + ' 23:59:59'),
-            ('action', '=', 'sign_in')], order="name ASC")
-        time_zone = context.has_key("tz") and context['tz'] or "Africa/Cairo" if context else "Africa/Cairo"
+            ('check_in', '>=', key + ' 00:00:01'),
+            ('check_in', '<=', key + ' 23:59:59')], order="check_in ASC")
+        # time_zone = context.has_key("tz") and context['tz'] or "Africa/Cairo" if context else "Africa/Cairo"
         if first_att_ids:
-            sign_date = attendance_pool.browse(cr, uid, first_att_ids[0]).name
-            sign_date = self.convert_datetime_to_tz(cr, uid, sign_date, context)
+            sign_date = attendance_pool.browse(first_att_ids[0]).name
+            sign_date = self.convert_datetime_to_tz(sign_date)
             first_signin = sign_date.split(' ')[1]
         if last_att_ids:
-            temp_date = attendance_pool.browse(cr, uid, last_att_ids[0]).name
-            temp_date = self.convert_datetime_to_tz(cr, uid, temp_date, context)
+            temp_date = attendance_pool.browse(last_att_ids[0]).name
+            temp_date = self.convert_datetime_to_tz(temp_date)
             last_signout = temp_date.split(' ')[1]
             temp_lastout = float(last_signout[:5].replace(':', '.'))
             flex_pool = self.pool.get("additional.flexible.hours")
-            flex_ids = flex_pool.search(cr, uid, [('penalty_id', '=', penalty_rule.id),
+            flex_ids = flex_pool.search([('penalty_id', '=', penalty_rule.id),
                                                   ('from_time', '<=', temp_lastout),
                                                   ('to_time', '>=', temp_lastout)])
             if flex_ids:
-                allowed_nextday = flex_pool.browse(cr, uid, flex_ids[0]).flex_hours
+                allowed_nextday = flex_pool.browse(flex_ids[0]).flex_hours
         return [last_signout, allowed_nextday, first_signin]
 
     def get_float_time(self, str_date):

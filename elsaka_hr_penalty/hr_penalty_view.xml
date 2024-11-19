@@ -112,7 +112,7 @@
                                         <field name="from_time" required="1"/>
                                         <field name="to_time" required="1"/>
                                         <field name="flex_hours" required="1"/>
-                                        <field name="penalty_id" invisible="1"/>
+                                        <field name="penalty_id" column_invisible="1"/>
                                     </list>
                                 </field>
                             </page>
@@ -261,25 +261,25 @@
                             <button string="Calculate Delay" name="calc_delay" type="object" groups="hr.group_hr_user" invisible="state not in ['draft', '1approve', '2approve', '']" />
                             <field name="employee_delay_line" readonly="1">
                                 <list string="Lines" editable="top">
-                                    <field name="employee_delay_id" invisible="1" />
+                                    <field name="employee_delay_id"  column_invisible="1"/>
                                     <field name="date" />
                                     <field name="time_diff" sum="time_diff" />
                                     <field name="type" />
                                     <field name="permission" />
                                     <field name="permission_hours" sum="permission_hours" />
-                                    <field name="actual_delay" sum="actual_delay" invisible="1" />
+                                    <field name="actual_delay" sum="actual_delay"  column_invisible="1"/>
                                     <field name="ded_applied" sum="ded_applied" />
                                     <field name="deduction" sum="Total Deduction" />
                                     <field name="waive" groups="hr.group_hr_manager" />
                                     <field name="worked_hours" sum="Worked Hours" />
                                     <field name="working" sum="working" />
                                     <field name="note" />
-                                    <button name="action_waive" string="Toggle Waive" type="object" class="oe_link" invisible="dont_show != False" />
-                                    <field name="dont_show" invisible="1" />
+                                    <button name="action_waive" string="Toggle Waive" type="object" class="oe_link"  invisible="dont_show != False" />
+                                    <field name="dont_show" column_invisible="1"/>
                                     <field name="first_signin"/>
                                     <field name="last_signout"/>
                                     <field name="allowed_nextday"/>
-                                    <field name="odd_action" invisible="1"/>
+                                    <field name="odd_action" column_invisible="1"/>
                                     <field name="travel_alw"/>
                                 </list>
                             </field>
