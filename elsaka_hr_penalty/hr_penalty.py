@@ -1385,11 +1385,11 @@ class employee_delay(models.Model):
             ('check_in', '<=', key + ' 23:59:59')], order="check_in ASC")
         # time_zone = context.has_key("tz") and context['tz'] or "Africa/Cairo" if context else "Africa/Cairo"
         if first_att_ids:
-            sign_date = attendance_pool.browse(first_att_ids[0]).name
+            sign_date = attendance_pool.browse(first_att_ids[0]).check_in
             sign_date = self.convert_datetime_to_tz(sign_date)
             first_signin = sign_date.split(' ')[1]
         if last_att_ids:
-            temp_date = attendance_pool.browse(last_att_ids[0]).name
+            temp_date = attendance_pool.browse(last_att_ids[0]).check_out
             temp_date = self.convert_datetime_to_tz(temp_date)
             last_signout = temp_date.split(' ')[1]
             temp_lastout = float(last_signout[:5].replace(':', '.'))
