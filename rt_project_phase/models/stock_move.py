@@ -12,13 +12,9 @@ class StockMove(models.Model):
     phase_id = fields.Many2one(
         'project.phase', 'Phase',)
     milestone_id = fields.Many2one(
-        'project.milestone', 'Milestone', required=True)
+        'project.milestone', 'Milestone')
 
 
-    @api.onchange('phase_id')
-    def _onchange_phase_id(self):
-        for rec in self:
-            rec.milestone_id = rec.phase_id.milestone_id
 
 
     def _generate_valuation_lines_data(self, partner_id, qty, debit_value, credit_value, debit_account_id, credit_account_id, svl_id, description):
