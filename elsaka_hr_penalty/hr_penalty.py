@@ -393,11 +393,11 @@ class employee_delay(models.Model):
             first_leave_date = ''
             count = 0.0
             if contract and contract.gross:
-                print(f'contract.gross ====== {contract.gross}')
+                # print(f'contract.gross ====== {contract.gross}')
                 day_rate = round(contract.gross / 30, 2)
             print(f'len(delay.employee_delay_line) ========= {len(delay.employee_delay_line)}')
             for delay_line in delay.employee_delay_line:
-                print(f'day_rate ======= {day_rate}')
+                # print(f'day_rate ======= {day_rate}')
                 if delay_line.type == 'leaves' and not delay_line.deduction:
                     if count == 0.0:
                         first_leave_date += str(delay_line.date)
@@ -584,6 +584,7 @@ class employee_delay(models.Model):
         return penalty_rule
 
     def calc_delay(self):
+
         if 'employee_delay_ids' in self.env.context:
             employee_delay_ids = self.env.context.get('employee_delay_ids')
         else:
@@ -599,7 +600,12 @@ class employee_delay(models.Model):
             # FLUSH THE DATA & RECALCULATE
             if this.employee_delay_line:
                 this.employee_delay_line.unlink()
+                # line_ids = [x.id for x in this.employee_delay_line]
+                # employee_delay_line_pool.unlink(line_ids)
 
+            date_format = "%Y-%m-%d"
+            date_list = self.generate_date_dic(this.date_from, this.date_to, date_format)
+            datewise_data = dict((x, []) for x in date_list)
             # Penalty Rule
             penalty_rule = penalty_rule_pool.search([
                 ('employee_id', '=', this.employee_id.id),
@@ -616,9 +622,6 @@ class employee_delay(models.Model):
             if not penalty_rule:
                 raise UserError(_('No Penalty Rule found.'))
 
-            date_format = "%Y-%m-%d"
-            date_list = self.generate_date_dic(this.date_from, this.date_to, date_format)
-            datewise_data = dict((x, []) for x in date_list)
 
             for key, value in datewise_data.items():
                 attendance_ids = attendance_pool.search([
@@ -641,16 +644,27 @@ class employee_delay(models.Model):
                 penalty_rule = self.get_penalty_rule(this, key)
 
                 # shift data
-                assign_shift_line_ids = patch_delay_cal_pool.get_employee_shift(
-                    this.employee_id.id, key, key)
+                assign_shift_line_ids = patch_delay_cal_pool.get_employee_shift(this.employee_id.id, key, key)
                 if not assign_shift_line_ids:
                     raise UserError(_('Employee %s has no assigned shifts in period from %s To %s.' % (
                         this.employee_id.name, this.date_from, this.date_to)))
-                shift_line = assign_shift_line_ids[0]
+                print(f"shift line Ids ======= {assign_shift_line_ids}")
+                shift_line = assign_shift_line_ids
                 #                 print "SHIFT APPLIED: =============> ",shift_line.shift_id.id,shift_line.shift_id.name
-                shift_starts = float(shift_line.shift_id.from_hours + shift_line.shift_id.flexible_hours)
+                # flixable_hours = sum(assign_shift_line_ids.mapped("flexible_hours"))
+                # sum(assign_shift_line_ids.mapped("from_hours"))
+                # flexible_hours = sum(assign_shift_line_ids.mapped("flexible_hours"))
+                # from_hours = sum(assign_shift_line_ids.mapped("from_hours"))
+                # shift_starts = float(from_hours + flexible_hours)
+                flexible_hours = 0.0
+                from_hours = 0.0
+                for rec in shift_line:
+                    flexible_hours += rec.shift_id.flexible_hours
+                    from_hours += rec.shift_id.from_hours
+                shift_starts = float(from_hours + flexible_hours)
+                # shift_starts = float(shift_line.shift_id.from_hours + shift_line.shift_id.flexible_hours)
                 shift_starts = self.revise_shift_ends(shift_starts)
-
+                print(f"shift start ====> {shift_starts}")
                 # GETTIG PER HOUR FROM SPECIAL MONTHS AND GROSS WAGE
                 per_hour = 0.0
                 contract = self.get_employee_contract(this.employee_id)
@@ -678,9 +692,10 @@ class employee_delay(models.Model):
                                                                this, key, penalty_rule)
                 first_signin = next_day_data[2]
                 last_signout = next_day_data[0]
-                print(f"first sign in ==== {first_signin}")
-                print(f"last sign last_signout ==== {last_signout}")
                 allowed_nextday = next_day_data[1]
+                # print(f"first sign in ==== {first_signin}")
+                # print(f"last sign last_signout ==== {last_signout}")
+                # print(f"allowed next day ==== {allowed_nextday}")
 
                 shift_ends = shift_line.shift_id.to_hours
                 worked_hours = 0.0
@@ -725,8 +740,8 @@ class employee_delay(models.Model):
                     if not holiday_ids and key not in special_dates:
                         type = 'absent'
                         actual_delay = shift_line.shift_id.total_working_hours - shift_line.shift_id.break_hours
-                        # for line in penalty_rule:
-                        #     ded_applied = line.absent_penalty
+                        for line in penalty_rule:
+                            ded_applied = line.absent_penalty
                         absent_count += 1
                         ded_applied = self.check_penalty_absent_rule_line(penalty_rule, absent_count)
                         if not ded_applied:
@@ -843,6 +858,10 @@ class employee_delay(models.Model):
                                 shift_ends = self.revise_shift_ends(shift_ends)
                         # print "shift_start:shift_ends ===========> ",shift_starts,shift_ends
 
+
+                if public_leave:
+                    continue
+
                 loop = False
                 signin_penalty = 0.0
                 signout_penalty = 0.0
@@ -926,25 +945,84 @@ class employee_delay(models.Model):
                 # print "singin_time,singout_time : =======> ",singin_time,singout_time
                 # print "shift_starts, shift_ends : =======> ",shift_starts, shift_ends
                 # print "signin_penalty,signout_penalty: =========> ",signin_penalty,signout_penalty
+                # if shift_line.shift_id.rest_period_ids and not half_leave:
+                #     # print "0. ****** WORKED : WORKING : -------> ", worked_hours,working
+                #     working = self.consider_break_time(this.employee_id.id, key,
+                #                                        shift_line.shift_id.rest_period_ids, working)
+                #     # print 'BREAK ================> working-0001 ', working
+                #     # print "\n1. AFTER WORKING *** WORKED : WORKING : -------> ", worked_hours,working
+                #     worked_hours = self.consider_break_time(this.employee_id.id, key,
+                #                                             shift_line.shift_id.rest_period_ids, worked_hours)
+                #     # print 'BREAK ================> worked_hours-0001 ', worked_hours
+                #     # print "2. AFTER WORKING *** WORKED : WORKING : -------> ", worked_hours, working
+                #     if working and singout_time > shift_ends and working and singin_time < shift_line.shift_id.from_hours:
+                #         temp = self.convert_float_to_time(shift_ends, singout_time)
+                #         temp = self.revise_shift_ends(temp)
+                #         temp1 = self.convert_float_to_time(singin_time, shift_line.shift_id.from_hours)
+                #         temp1 = self.revise_shift_ends(temp1)
+                #         temp = temp + temp1
+                #         temp = self.revise_shift_ends(temp)
+                #         if temp < worked_hours:
+                #             working = self.convert_float_to_time(temp, worked_hours)
+                #             working = self.revise_shift_ends(working)
+                #     else:
+                #         if working and singout_time > shift_ends:
+                #             if worked_hours >= 9.0 and working >= 9.0:
+                #                 working = 9.0
+                #             else:
+                #                 extra_hours = self.get_extra_hours_shift_end(attendance_pool, key, this.employee_id,
+                #                                                              shift_ends, shift_line)
+                #                 #                                 temp = self.convert_float_to_time(shift_ends, singout_time)
+                #                 #                                 temp = self.revise_shift_ends(temp)
+                #                 if extra_hours < worked_hours:
+                #                     working = self.convert_float_to_time(extra_hours, worked_hours)
+                #                     working = self.revise_shift_ends(working)
+                #                 # print "temp,worked_hours,workingDDDDDDDDDDDDDDDDDDDDDDDDDDDD", extra_hours,worked_hours,working
+                #
+                #         if working and singin_time < shift_line.shift_id.from_hours:
+                #             temp = self.convert_float_to_time(singin_time, shift_line.shift_id.from_hours)
+                #             temp = self.revise_shift_ends(temp)
+                #             if temp < worked_hours:
+                #                 working = self.convert_float_to_time(temp, worked_hours)
+                #                 working = self.revise_shift_ends(working)
 
                 # WHEN PERMISSION: REWISE SIGN IN PENALTY ONLY
-                per_from = permission_ids and permission_ids[0].from_time or 0.0
-                per_to = permission_ids and permission_ids[0].to_time or 0.0
-                if per_from and per_to:
-                    if per_from <= shift_starts:
-                        if per_to <= singin_time:
-                            signin_penalty = self.convert_float_to_time(per_to, singin_time)
-                            signin_penalty = self.revise_shift_ends(signin_penalty)
+                for element in permission_ids:
+                    pp = element['leave']
+                    per_from = pp.from_time or 0.0
+                    per_to = pp.to_time or 0.0
+                    halftime = self.convert_float_to_time_as_float(
+                        (shift_starts) + (shift_line.shift_id.total_working_hours / 2))
+                    if shift_line.shift_id.is_ramadan:
+                        halftime = self.add_time(
+                            [shift_line.shift_id.from_hours, (shift_line.shift_id.total_working_hours / 2)])
+                    if per_from and per_to:
+                        if per_from <= halftime:
+                            if per_from <= shift_starts:
+                                if per_to <= singin_time:
+                                    signin_penalty = self.convert_float_to_time(per_to, singin_time)
+                                    signin_penalty = self.revise_shift_ends(signin_penalty)
+                                    # print "signin_penalty + Permission: =============>",signin_penalty
+                                else:
+                                    signin_penalty = 0.0
+                            else:
+                                if per_from >= singin_time:
+                                    pass
+                                else:
+                                    total_hours = self.convert_float_to_time(per_from, per_to)
+                                    total_hours = self.revise_shift_ends(total_hours)
+                                    if total_hours <= signin_penalty:
+                                        signin_penalty = self.convert_float_to_time(total_hours, signin_penalty)
+                                        signin_penalty = self.revise_shift_ends(signin_penalty)
                         else:
-                            signin_penalty = 0.0
-                    else:
-                        if per_from >= singin_time:
-                            pass
-                        else:
-                            total_hours = self.convert_float_to_time(per_from, per_to)
-                            total_hours = self.revise_shift_ends(total_hours)
-                            signin_penalty = self.convert_float_to_time(total_hours, signin_penalty)
-                            signin_penalty = self.revise_shift_ends(signin_penalty)
+                            if per_from <= shift_ends:
+                                if per_from >= singout_time and per_to <= shift_ends:
+                                    signout_penalty = self.convert_float_to_time(per_to, shift_ends)
+                                    #                                     signout_penalty = self.convert_float_to_time(singout_time,per_from)
+                                    signout_penalty = self.revise_shift_ends(signout_penalty)
+                                    # print "Revised Permission - signout_penalty: ==================> ",signout_penalty
+                                else:
+                                    signout_penalty = 0.0
 
                 # APPLY BREAK DEDUCTION
                 if shift_line.shift_id.rest_period_ids:
@@ -962,10 +1040,13 @@ class employee_delay(models.Model):
                     # print "1. : time_diff===========> ",time_diff
                 elif signin_penalty and not signout_penalty:
                     time_diff = signin_penalty
+                    time_diff = self.consider_addition_flexible_hours(this, key, time_diff)
+                    print(f"time_diff ====== {time_diff}")
                     actual_delay = time_diff
                     type = 'late_signin'
                     count += 1
                     ded_applied, penalty = self.check_penalty_rule_line(penalty_rule, time_diff, 'sign_in', this)
+                    print(f"dep_applied===={ded_applied}")
                     deduction = ded_applied * per_hour
                     self.create_line(key, time_diff, type, penalty,
                                      permission, permission_hrs, actual_delay, ded_applied,
@@ -973,7 +1054,7 @@ class employee_delay(models.Model):
                     # print "2. : signoin_penalty===========> ",time_diff
                     if halfday_leave_unpaid:
                         ded_applied = self.convert_time_to_float(halfday_leave_unpaid)
-                        deduction = round(ded_applied * per_hour, 2)
+                        deduction = ded_applied * per_hour
                         note = "Half Day Leave"
                         self.create_line(key, 0.0, 'leaves', penalty,
                                          permission, permission_hrs, 0.0, ded_applied, deduction,
@@ -994,19 +1075,20 @@ class employee_delay(models.Model):
                         else:
                             actual_delay = 0.0
 
-                        # change penalty rule now from actual delay not on time diff
-                        # print "permission_hrs, ded_applied: =============> ",permission_hrs, ded_applied
-                        ded_applied, penalty = self.check_penalty_rule_line(penalty_rule, actual_delay, 'sign_out',
-                                                                            this)
+                            # change penalty rule now from actual delay not on time diff
+                            # print "permission_hrs, ded_applied: =============> ",permission_hrs, ded_applied
+                            # ded_applied, penalty = self.check_penalty_rule_line(penalty_rule, actual_delay, 'sign_out',
+                            #                                                     this)
 
                         # print "ded_applied,actual_delay: =============> ",ded_applied,actual_delay
-                    #                         if permission_hrs < actual_delay:
-                    #                             ded_applied = self.convert_float_to_time(permission_hrs, actual_delay)
-                    #                             print "1111ded_applied: =============> ",ded_applied
-                    #                         else:
-                    #                             print "ded_applied, permission_hrs: ===========> ",ded_applied, permission_hrs
-                    #                             ded_applied = self.convert_float_to_time(actual_delay, permission_hrs)
-                    #                         ded_applied = self.convert_time_to_float(ded_applied)
+                        if permission_hrs < actual_delay:
+                            ded_applied = self.convert_float_to_time(permission_hrs, actual_delay)
+                            # print "1111ded_applied: =============> ",ded_applied
+                        else:
+                            # print "ded_applied, permission_hrs: ===========> ",ded_applied, permission_hrs
+                            ded_applied = self.convert_float_to_time(actual_delay, permission_hrs)
+
+                        ded_applied = self.convert_time_to_float(ded_applied)
 
                     deduction = ded_applied * per_hour
                     self.create_line(key, time_diff, type, penalty,
@@ -1015,7 +1097,7 @@ class employee_delay(models.Model):
                     # print "3. : signout_penalty===========> ",time_diff
                     if halfday_leave_unpaid:
                         ded_applied = self.convert_time_to_float(halfday_leave_unpaid)
-                        deduction = round(ded_applied * per_hour, 2)
+                        deduction = ded_applied * per_hour
                         note = "Half Day Leave"
                         self.create_line(key, 0.0, 'leaves', penalty,
                                          permission, permission_hrs, 0.0, ded_applied, deduction,
@@ -1027,6 +1109,10 @@ class employee_delay(models.Model):
                     count += 1
                     for k, v in time_diff_lst.items():
                         time_diff = k == 'signin' and signin_penalty or signout_penalty
+                        if k == 'signin':
+                            time_diff = self.consider_addition_flexible_hours(this, key, time_diff)
+                        print(time_diff)
+
                         actual_delay = time_diff
                         type = k == 'signin' and 'late_signin' or 'late_signout'
                         action = k == 'signin' and 'sign_in' or 'sign_out'
@@ -1046,6 +1132,8 @@ class employee_delay(models.Model):
                                          worked_hours, note, working, 0.0, last_signout, allowed_nextday, first_signin, travel_alw)
 
         return True
+
+
 
     def apply_break_deduction(self, key, value, shift, penalty_rule, per_hour):
         #         print "key, value: ==========> ",key, value
@@ -1091,16 +1179,16 @@ class employee_delay(models.Model):
                             deduction = ded_applied * per_hour
                             self.create_line(key, break_out_penalty, type, penalty, 'no', 0.0,
                                              break_out_penalty, ded_applied, deduction)
-                if not flag:
-                    #                     print "break_in, break_out: ==========> ",break_in, break_out
-                    break_in_penalty = self.convert_float_to_time(break_in, break_out)
-                    break_in_penalty = self.revise_shift_ends(break_in_penalty)
-                    type = 'early_breakin'
-                    action = 'break_in'
-                    ded_applied, penalty = self.check_penalty_rule_line(penalty_rule, break_in_penalty, action, self)
-                    deduction = ded_applied * per_hour
-                    self.create_line(key, break_in_penalty, type, penalty, 'no', 0.0,
-                                     break_in_penalty, ded_applied, deduction)
+                    if not flag:
+                        #                     print "break_in, break_out: ==========> ",break_in, break_out
+                        break_in_penalty = self.convert_float_to_time(break_in, break_out)
+                        break_in_penalty = self.revise_shift_ends(break_in_penalty)
+                        type = 'early_breakin'
+                        action = 'break_in'
+                        ded_applied, penalty = self.check_penalty_rule_line(penalty_rule, break_in_penalty, action, self)
+                        deduction = ded_applied * per_hour
+                        self.create_line(key, break_in_penalty, type, penalty, 'no', 0.0,
+                                         break_in_penalty, ded_applied, deduction)
 
     def revise_shift_ends(self, float_val):
         hours = str(float_val).split('.')[0]
@@ -1275,6 +1363,19 @@ class employee_delay(models.Model):
         print('result = ', type(hrs), type(mins), '==== ', result, type(result))
         return float(result)
 
+    def consider_addition_flexible_hours(self, this, key, time_diff):
+        employee_delay_line_pool = self.env['employee.delay.line']
+        # GET PREVIOUS DATA DATA
+        allowed_time = self.get_previous_day_allowed_time(employee_delay_line_pool, this.id, key)
+
+        if allowed_time and time_diff:
+            if time_diff >= allowed_time:
+                time_diff = self.convert_float_to_time(allowed_time, time_diff)
+                time_diff = self.revise_shift_ends(time_diff)
+            else:
+                time_diff = 0.0
+        return time_diff
+
     def convert_float_to_time_as_float1(self, float_val):
         if float_val == 2.5:
             float_val = 2.30
@@ -1370,6 +1471,21 @@ class employee_delay(models.Model):
         if len(in_att_ids) == len(out_att_ids):
             odd_action = False
         return odd_action
+
+    def get_previous_day_allowed_time(self, employee_delay_line_pool, employee_delay_id, date):
+        import datetime
+        allowed_time = 0.0
+        date_strptime = (datetime.datetime.strptime(date.split(' ')[0], '%Y-%m-%d'))
+        day_before = (date_strptime + datetime.timedelta(days=-1)).strftime('%Y-%m-%d')
+        previous_day_ids = employee_delay_line_pool.search([('employee_delay_id', '=', employee_delay_id),
+                                                            ('date', '=', day_before)])
+        print(f" previous days ids ======= {previous_day_ids.allowed_nextday}")
+        if previous_day_ids:
+            # allowed_time = employee_delay_line_pool.browse(previous_day_ids[0]).allowed_nextday
+            allowed_time = sum(previous_day_ids.mapped("allowed_nextday"))
+            print(f" allowed_time ======= {allowed_time}")
+        return allowed_time
+
 
     def get_next_day_allowed_time(self, attendance_pool, this, key,
                                   penalty_rule):
