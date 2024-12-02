@@ -24,6 +24,11 @@ class hr_payslip(models.Model):
         print('res')
         return res
 
+    def compute_sheet(self):
+        res = super().compute_sheet()
+        self._compute_input_line_ids()
+        return res
+
     @api.depends('employee_id', 'contract_id', 'struct_id', 'date_from', 'date_to', 'struct_id')
     def _compute_input_line_ids(self):
         res = super()._compute_input_line_ids()
