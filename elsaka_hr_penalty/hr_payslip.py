@@ -1,9 +1,11 @@
 # import datetime
 from odoo import api, fields, models, _, Command
-from datetime import datetime
+from collections import defaultdict
+from datetime import datetime, date, time
 from dateutil.relativedelta import relativedelta
-import time
+import pytz
 from odoo import tools
+from odoo.exceptions import UserError
 
 
 class hr_payslip(models.Model):
