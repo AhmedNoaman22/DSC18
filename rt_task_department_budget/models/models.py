@@ -45,6 +45,21 @@ class DepartmentLine(models.Model):
 class AccountAnalyticLine(models.Model):
     _inherit = "account.analytic.line"
 
+    # Added for recalculate amount of timesheet selected called in server action
+    def recalculate(self):
+        sudo_self = self.sudo()  # this creates only one env for all operation that required sudo()
+        for timesheet in sudo_self:
+            if timesheet.employee_id:
+                cost = timesheet._hourly_cost()
+                amount = -timesheet.unit_amount * cost
+                amount_converted = timesheet.employee_id.currency_id._convert(
+                    amount, timesheet.account_id.currency_id or timesheet.currency_id, self.env.company, timesheet.date)
+                timesheet_record = self.env['account.analytic.line'].search([('id','=',timesheet.id)])
+                timesheet_record.sudo().update({
+                    'amount': amount_converted,
+                })
+                print(f"amount of timesheet ====> {timesheet_record.amount}")
+
     # def create(self, vals_list):
     #     res = super(AccountAnalyticLine, self).create(vals_list)
     #     print('=========== vals_list ', vals_list)
