@@ -257,7 +257,7 @@ class HrPayslipEmployees(models.TransientModel):
         payslips.compute_sheet()
         payslips._compute_input_line_ids()
         payslips.get_input_lines()
-        print("compute sheet done")
+        # print("compute sheet done")
         payslip_run.slip_ids.write({'state': 'verify'})
         payslip_run.state = 'verify'
 

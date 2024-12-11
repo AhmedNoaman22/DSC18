@@ -10,6 +10,12 @@
                 <xpath expr="//group/group/field[@name='structure_type_id']" position="after">
                     <field name="special_month" />
                 </xpath>
+                <xpath expr="//page[@name='information']/group" position="inside">
+                    <group string="Target Deduction">
+                        <field name="target_dedcution_hours" />
+                        <field name="target_dedcution_rate"/>
+                    </group>
+                </xpath>
                 <notebook position="inside">
                     <page string="Special Months" invisible="special_month != True">
                         <button name="calculate_working_hours" string="Calculate Target Hours" type="object" />
@@ -283,13 +289,23 @@
                                     <field name="travel_alw"/>
                                 </list>
                             </field>
-                            <group col="4">
-                                <field name="total_late_deduction" />
-                                <field name="total_waived_deduction" />
-                                <field name="total_deduction" />
-                                <field name="total_worked_hours" />
-                                <field name="total_working" />
-                                <field name="total_actual_delay" invisible="1" />
+                            <group col="2">
+                                <group>
+                                    <field name="total_late_deduction" />
+                                    <field name="total_waived_deduction" />
+                                    <field name="total_deduction" />
+                                    <field name="target_deduction"/>
+                                    <field name="has_ramadan" invisible="1"/>
+                                </group>
+                                <group>
+                                    <field name="total_worked_hours" />
+                                    <field name="total_working" />
+                                    <field name="total_target_hours" widget="float_time"/>
+                                    <field name="total_permission_hours"/>
+                                    <field name="total_late_signin"/>
+                                    <field name="total_early_signout"/>
+                                    <field name="total_actual_delay" />
+                                </group>
                             </group>
                         </page>
                     </notebook>
