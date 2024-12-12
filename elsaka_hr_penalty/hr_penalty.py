@@ -524,10 +524,12 @@ class employee_delay(models.Model):
             delay.total_actual_delay = total_actual_delay
             delay.total_worked_hours = total_worked_hours
             delay.total_working = total_working
-            if total_target_hours >= contract.target_dedcution_hours:
-                delay.total_target_hours = subtract_patch(float(contract.target_dedcution_hours), total_target_hours)
-            else:
-                delay.total_target_hours = subtract_patch(total_target_hours, float(contract.target_dedcution_hours))
+
+            if contract:
+                if total_target_hours >= contract.target_dedcution_hours:
+                    delay.total_target_hours = subtract_patch(float(contract.target_dedcution_hours), total_target_hours)
+                else:
+                    delay.total_target_hours = subtract_patch(total_target_hours, float(contract.target_dedcution_hours))
             delay.total_permission_hours = total_permission_hours
             delay.total_late_signin = total_late_signin
             delay.total_early_signout = total_early_signout
@@ -555,12 +557,13 @@ class employee_delay(models.Model):
         date_list = self.generate_date_dic(self.date_from, self.date_to, "%Y-%m-%d")
         has_ramadan = False
         for date in date_list:
-            shift_line_ids = patch_delay_cal_pool.get_employee_shift(
-                self.employee_id.id, date, date)
-            shift_line = shift_line_ids[0]
-            # print(f"shift linesss ===== {shift_line}")
-            if shift_line.shift_id.is_ramadan:
-                has_ramadan = True
+            shift_line_ids = patch_delay_cal_pool.get_employee_shift(self.employee_id.id, date, date)
+            print(f"shift linesss ===== {shift_line_ids}")
+            if shift_line_ids:
+                shift_line = shift_line_ids[0]
+                # print(f"shift linesss ===== {shift_line}")
+                if shift_line.shift_id.is_ramadan:
+                    has_ramadan = True
         self.has_ramadan = has_ramadan
 
     employee_id = fields.Many2one('hr.employee', 'Employees', required=True)
