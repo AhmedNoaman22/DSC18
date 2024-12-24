@@ -42,6 +42,9 @@ class AccountAnalyticLine(models.Model):
     def _compute_total_hours(self):
         for record in self:
             if record.date:
+                print('========= enter here ===========')
+                print('========= record.date ===========', record.date)
+
                 current_user_employee = self.env.user.employee_id
 
                 if not current_user_employee:
@@ -74,3 +77,20 @@ class AccountAnalyticLine(models.Model):
             if record.unit_amount > record.remaining_hour:
                 print('========== YOU CAN TIME GREATER THAN REMAINING =======')
                 raise UserError(_('Time Spent Greater Than Remaining'))
+
+    @api.model
+    def create(self, vals):
+        res = super(AccountAnalyticLine, self).create(vals)
+        for record in self:
+            if record.unit_amount > record.remaining_hour:
+                raise UserError(_('Time Spent Greater Than Remaining'))
+        return res
+
+    def write(self, vals):
+        res = super(AccountAnalyticLine, self).write(vals)
+        for record in self:
+            if vals.get("unit_amount"):
+                unit_amount = vals.get("unit_amount")
+                if unit_amount > record.remaining_hour:
+                    raise UserError(_('Time Spent Greater Than Remaining'))
+        return res
