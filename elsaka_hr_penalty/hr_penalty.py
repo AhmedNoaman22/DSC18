@@ -421,7 +421,7 @@ class employee_delay(models.Model):
     #     return super(employee_delay, self)._track_subtype(init_values)
 
     # @api.one
-    @api.depends('employee_delay_line.deduction', 'employee_delay_line.time_diff', 'employee_delay_line.waive', 'state', 'employee_delay_line.working', 'employee_delay_line.worked_hours')
+    @api.depends('employee_id','employee_delay_line.deduction', 'employee_delay_line.time_diff', 'employee_delay_line.waive', 'state', 'employee_delay_line.working', 'employee_delay_line.worked_hours')
     def _calc_all(self):
         worked_dict = {}
         working_dict = {}
@@ -553,7 +553,10 @@ class employee_delay(models.Model):
             #     print(f"target_subtract_working ====== {target_subtracted_working}")
             #     delay.target_deduction = target_subtracted_working * per_hour_rate * temp_target_dedcution
             # per_hour_rate = delay.get_employee_per_hour_rate(delay.employee_id, delay.date_from, delay.date_to, delay.has_ramadan)
-            per_hour_rate = delay.get_employee_per_hour_rate(delay.employee_id, delay.date_from, delay.date_to, delay.has_ramadan)
+            if delay.employee_id:
+                per_hour_rate = delay.get_employee_per_hour_rate(delay.employee_id, delay.date_from, delay.date_to, delay.has_ramadan)
+            else:
+                per_hour_rate = 0.0
             print(f' Per_hour_rate ======> {per_hour_rate}')
             total_hours_deduction = delay.total_actual_delay - ( delay.total_worked_hours -  delay.total_working )
             print(f' total_hours_deduction ======> {total_hours_deduction}')
@@ -1830,6 +1833,7 @@ class employee_delay(models.Model):
                                    has_ramadan=False):
         patch_delay_cal_pool = self.env['patch.delay.cal']
         assign_shift_line_ids = patch_delay_cal_pool.get_employee_shift(employee_id.id, date_from, date_to)
+        print(f"assign_shift_line_ids ====> {assign_shift_line_ids}")
         if not assign_shift_line_ids:
             raise UserError(_('Employee %s has no assigned shifts in period from %s To %s.' % (
                 employee_id.name, date_from, date_to)))
