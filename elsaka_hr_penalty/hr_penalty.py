@@ -546,8 +546,8 @@ class employee_delay(models.Model):
             #     print(f"temp_target_dedcution ====== {temp_target_dedcution}")
             #     print(f"target_subtract_working ====== {target_subtracted_working}")
             #     delay.target_deduction = target_subtracted_working * per_hour_rate * temp_target_dedcution
-            per_hour_rate = delay.get_employee_per_hour_rate(delay.employee_id,
-                                                            delay.date_from, delay.date_to, delay.has_ramadan)
+            # per_hour_rate = delay.get_employee_per_hour_rate(delay.employee_id, delay.date_from, delay.date_to, delay.has_ramadan)
+            per_hour_rate = delay.get_employee_per_hour_rate(delay.employee_id, delay.date_from, delay.date_to, delay.has_ramadan)
             total_hours_deduction = total_target_hours - total_worked_hours
             delay.total_hours_deduction = total_hours_deduction
             delay.target_deduction = total_hours_deduction * per_hour_rate
@@ -799,25 +799,28 @@ class employee_delay(models.Model):
                 # GETTIG PER HOUR FROM SPECIAL MONTHS AND GROSS WAGE
                 per_hour = 0.0
                 contract = self.get_employee_contract(this.employee_id)
-                if contract.special_month:
-                    month_line_pool = self.env['month.line']
-                    month_line_ids = month_line_pool.search([
-                        ('contract_id.employee_id', '=', this.employee_id.id),
-                        ('contract_id.state', 'in', ['draft', 'open']),
-                        ('contract_id.special_month', '=', True),
-                        ('date_from', '<=', key),
-                        ('date_to', '>=', key)])
-                    if not month_line_ids:
-                        raise UserError(_("No Special Month Configured found for employee %s's Contract of date %s." % (
-                            this.employee_id.name, key)))
-                    per_hour = month_line_ids[0].per_hour
+                if contract:
+                    if contract.special_month:
+                        month_line_pool = self.env['month.line']
+                        month_line_ids = month_line_pool.search([
+                            ('contract_id.employee_id', '=', this.employee_id.id),
+                            ('contract_id.state', 'in', ['draft', 'open']),
+                            ('contract_id.special_month', '=', True),
+                            ('date_from', '<=', key),
+                            ('date_to', '>=', key)])
+                        if not month_line_ids:
+                            raise UserError(_("No Special Month Configured found for employee %s's Contract of date %s." % (
+                                this.employee_id.name, key)))
+                        per_hour = month_line_ids[0].per_hour
+                    else:
+                        # per_hour = contract.gross and (contract.gross / (30 * shift_line.shift_id.total_working_hours))
+                        # or 0.0#Assuming 30 day of a month
+                        per_hour = contract.gross and (contract.gross /
+                                                       (
+                                                               30 * (
+                                                               shift_line.shift_id.total_working_hours - shift_line.shift_id.break_hours))) or 0.0  # Assuming 22 day of a month
                 else:
-                    # per_hour = contract.gross and (contract.gross / (30 * shift_line.shift_id.total_working_hours))
-                    # or 0.0#Assuming 30 day of a month
-                    per_hour = contract.gross and (contract.gross /
-                                                   (
-                                                           30 * (
-                                                           shift_line.shift_id.total_working_hours - shift_line.shift_id.break_hours))) or 0.0  # Assuming 22 day of a month
+                    per_hour = 0.0
 
                 next_day_data = self.get_next_day_allowed_time(attendance_pool,
                                                                this, key, penalty_rule)
@@ -1820,18 +1823,24 @@ class employee_delay(models.Model):
         date_list = self.generate_date_dic(date_from, date_to, "%Y-%m-%d")
         shift_hours = []
         for date in date_list:
+            # print(f"date =====> {date}")
             shift_line_ids = patch_delay_cal_pool.get_employee_shift(employee_id.id, date, date)
-            shift_line = shift_line_ids[0]
-            shift_hours.append(shift_line.shift_id.total_working_hours)
+            # print(f"shift_line_ids ====> {shift_line_ids}")
+            if shift_line_ids:
+                shift_line = shift_line_ids[0]
+                shift_hours.append(shift_line.shift_id.total_working_hours)
 
         total_hours = self.add_time(shift_hours)
         contract = self.get_employee_contract(employee_id)
-        if not has_ramadan:
-            per_hour = contract.wage and (contract.wage / 198) or 0.0
+        if contract:
+            if not has_ramadan:
+                per_hour = contract.wage and (contract.wage / 198) or 0.0
+            else:
+                total_target = self.get_target_working_hours(employee_id.id,
+                                                             date_from, date_to)
+                per_hour = contract.wage and (contract.wage / total_target) or 0.0
         else:
-            total_target = self.get_target_working_hours(employee_id.id,
-                                                         date_from, date_to)
-            per_hour = contract.wage and (contract.wage / total_target) or 0.0
+            per_hour = 0.0
         return round(per_hour, 2)
 
     def convert_float_to_time(self, s1, s2):
