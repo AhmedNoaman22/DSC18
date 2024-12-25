@@ -550,7 +550,7 @@ class employee_delay(models.Model):
             # per_hour_rate = delay.get_employee_per_hour_rate(delay.employee_id, delay.date_from, delay.date_to, delay.has_ramadan)
             per_hour_rate = delay.get_employee_per_hour_rate(delay.employee_id, delay.date_from, delay.date_to, delay.has_ramadan)
             print(f' Per_hour_rate ======> {per_hour_rate}')
-            total_hours_deduction = total_actual_delay - ( total_worked_hours - total_working )
+            total_hours_deduction = delay.total_actual_delay - ( delay.total_worked_hours -  delay.total_working )
             print(f' total_hours_deduction ======> {total_hours_deduction}')
 
             delay.total_hours_deduction = total_hours_deduction
