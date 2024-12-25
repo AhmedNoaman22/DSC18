@@ -301,6 +301,7 @@
                                     <field name="total_worked_hours" />
                                     <field name="total_working" />
                                     <field name="total_target_hours" widget="float_time"/>
+                                    <field name="total_hours_deduction" widget="float_time"/>
                                     <field name="total_permission_hours"/>
                                     <field name="total_late_signin"/>
                                     <field name="total_early_signout"/>
@@ -324,7 +325,9 @@
                     <field name="date_to" />
                     <field name="total_late_deduction" />
                     <field name="total_waived_deduction" />
+                    <field name="total_hours_deduction" widget="float_time"/>
                     <field name="total_deduction" />
+                    <field name="target_deduction"/>
                     <field name="state" />
                 </list>
             </field>

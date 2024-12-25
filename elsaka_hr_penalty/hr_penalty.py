@@ -278,8 +278,8 @@ class patch_delay_cal(models.Model):
                     else:
                         date_end = datetime.strptime(this.date_to, '%Y-%m-%d').date()
 
-                    print(f"date_end ===== {date_end}")
-                    print(f"contract date ===== {contract.date_start}")
+                    # print(f"date_end ===== {date_end}")
+                    # print(f"contract date ===== {contract.date_start}")
                     if contract.date_start <= date_end:
                         pass
                     else:
@@ -448,7 +448,7 @@ class employee_delay(models.Model):
             if contract and contract.gross:
                 # print(f'contract.gross ====== {contract.gross}')
                 day_rate = round(contract.gross / 30, 2)
-            print(f'len(delay.employee_delay_line) ========= {len(delay.employee_delay_line)}')
+            # print(f'len(delay.employee_delay_line) ========= {len(delay.employee_delay_line)}')
             permission_list = []
             late_signin = []
             early_signout = []
@@ -524,22 +524,37 @@ class employee_delay(models.Model):
             delay.total_actual_delay = total_actual_delay
             delay.total_worked_hours = total_worked_hours
             delay.total_working = total_working
-            if total_target_hours >= contract.target_dedcution_hours:
-                delay.total_target_hours = subtract_patch(float(contract.target_dedcution_hours), total_target_hours)
-            else:
-                delay.total_target_hours = subtract_patch(total_target_hours, float(contract.target_dedcution_hours))
+
+            # if contract:
+            #     if total_target_hours >= contract.target_dedcution_hours:
+            #         delay.total_target_hours = subtract_patch(float(contract.target_dedcution_hours), total_target_hours)
+            #     else:
+            #         delay.total_target_hours = subtract_patch(total_target_hours, float(contract.target_dedcution_hours))
+            delay.total_target_hours = total_target_hours
             delay.total_permission_hours = total_permission_hours
             delay.total_late_signin = total_late_signin
             delay.total_early_signout = total_early_signout
-            if delay.total_working >= delay.total_target_hours:
-                delay.target_deduction = 0.0
-            else:
-                per_hour_rate = delay.get_employee_per_hour_rate(delay.employee_id,
-                                                                delay.date_from, delay.date_to, delay.has_ramadan)
-                # per_hour_rate = contract.wage and total_target_hours and (contract.wage / total_target_hours) or 0.0
-                temp_target_dedcution = float(contract.target_dedcution_rate) or 1
-                target_subtracted_working = subtract_patch(delay.total_working, delay.total_target_hours)  # SMALL FIRST
-                delay.target_deduction = ((target_subtracted_working) * per_hour_rate * temp_target_dedcution)
+            # if delay.total_working >= delay.total_target_hours:
+            #     delay.target_deduction = 0.0
+            # else:
+            #     per_hour_rate = delay.get_employee_per_hour_rate(delay.employee_id,
+            #                                                     delay.date_from, delay.date_to, delay.has_ramadan)
+            #     # per_hour_rate = contract.wage and total_target_hours and (contract.wage / total_target_hours) or 0.0
+            #     temp_target_dedcution = float(contract.target_dedcution_rate) or 1
+            #     target_subtracted_working = subtract_patch(delay.total_working, delay.total_target_hours)  # SMALL FIRST
+            #     print(f"per_hour_rate ====== {per_hour_rate}")
+            #     print(f"temp_target_dedcution ====== {temp_target_dedcution}")
+            #     print(f"target_subtract_working ====== {target_subtracted_working}")
+            #     delay.target_deduction = target_subtracted_working * per_hour_rate * temp_target_dedcution
+            per_hour_rate = delay.get_employee_per_hour_rate(delay.employee_id,
+                                                            delay.date_from, delay.date_to, delay.has_ramadan)
+            total_hours_deduction = total_target_hours - total_worked_hours
+            delay.total_hours_deduction = total_hours_deduction
+            delay.target_deduction = total_hours_deduction * per_hour_rate
+
+            print(f"per_hour_rate ====== {per_hour_rate}")
+            print(f"total_hours_deduction ====== {total_hours_deduction}")
+            print(f"target_deduction ====== {delay.target_deduction}")
 
             delay.total_leaves_amount = total_leaves_amount
             delay.count_leaves_days = count_leaves_days
@@ -555,12 +570,13 @@ class employee_delay(models.Model):
         date_list = self.generate_date_dic(self.date_from, self.date_to, "%Y-%m-%d")
         has_ramadan = False
         for date in date_list:
-            shift_line_ids = patch_delay_cal_pool.get_employee_shift(
-                self.employee_id.id, date, date)
-            shift_line = shift_line_ids[0]
-            # print(f"shift linesss ===== {shift_line}")
-            if shift_line.shift_id.is_ramadan:
-                has_ramadan = True
+            shift_line_ids = patch_delay_cal_pool.get_employee_shift(self.employee_id.id, date, date)
+            # print(f"shift linesss ===== {shift_line_ids}")
+            if shift_line_ids:
+                shift_line = shift_line_ids[0]
+                # print(f"shift linesss ===== {shift_line}")
+                if shift_line.shift_id.is_ramadan:
+                    has_ramadan = True
         self.has_ramadan = has_ramadan
 
     employee_id = fields.Many2one('hr.employee', 'Employees', required=True)
@@ -585,6 +601,7 @@ class employee_delay(models.Model):
     total_permission_hours = fields.Float(compute=_calc_all, string='Total Permission Hours', store=True)
     total_late_signin = fields.Float(compute=_calc_all, string='Total Late Sign-In', store=True)
     total_early_signout = fields.Float(compute=_calc_all, string='Total Early Sign-Out', store=True)
+    total_hours_deduction = fields.Float(compute=_calc_all, string='Total Hour Deduction', store=True)
 
     total_leaves_amount = fields.Float(compute=_calc_all, string='Total Leaves Amount', store=True)
     count_leaves_days = fields.Float(compute=_calc_all, string='Total Leave Days', store=True)
@@ -692,7 +709,7 @@ class employee_delay(models.Model):
         if not penalty_rule_ids:
             raise UserError(_('Warning! No Penalty Rule found.'))
         penalty_rule = penalty_rule_ids[0]
-        print(f'penalty_rule =========== {penalty_rule}')
+        # print(f'penalty_rule =========== {penalty_rule}')
         return penalty_rule
 
     def calc_delay(self):
@@ -762,7 +779,7 @@ class employee_delay(models.Model):
                 if not assign_shift_line_ids:
                     raise UserError(_('Employee %s has no assigned shifts in period from %s To %s.' % (
                         this.employee_id.name, this.date_from, this.date_to)))
-                print(f"shift line Ids ======= {assign_shift_line_ids}")
+                # print(f"shift line Ids ======= {assign_shift_line_ids}")
                 shift_line = assign_shift_line_ids
                 #                 print "SHIFT APPLIED: =============> ",shift_line.shift_id.id,shift_line.shift_id.name
                 # flixable_hours = sum(assign_shift_line_ids.mapped("flexible_hours"))
@@ -778,7 +795,7 @@ class employee_delay(models.Model):
                 shift_starts = float(from_hours + flexible_hours)
                 # shift_starts = float(shift_line.shift_id.from_hours + shift_line.shift_id.flexible_hours)
                 shift_starts = self.revise_shift_ends(shift_starts)
-                print(f"shift start ====> {shift_starts}")
+                # print(f"shift start ====> {shift_starts}")
                 # GETTIG PER HOUR FROM SPECIAL MONTHS AND GROSS WAGE
                 per_hour = 0.0
                 contract = self.get_employee_contract(this.employee_id)
@@ -848,9 +865,9 @@ class employee_delay(models.Model):
                     leave_data = self.check_approved_leave(this.employee_id.id, key)
                     holiday_ids = leave_data['holiday_ids']
                     special_dates = leave_data['date_list']
-                    print(f'key ======== {key}')
-                    print(f'special_dates ======== {special_dates}')
-                    print(f'holiday_ids ======== {holiday_ids}')
+                    # print(f'key ======== {key}')
+                    # print(f'special_dates ======== {special_dates}')
+                    # print(f'holiday_ids ======== {holiday_ids}')
                     if not holiday_ids and key not in special_dates:
                         type = 'absent'
                         actual_delay = shift_line.shift_id.total_working_hours - shift_line.shift_id.break_hours
@@ -1155,12 +1172,12 @@ class employee_delay(models.Model):
                 elif signin_penalty and not signout_penalty:
                     time_diff = signin_penalty
                     time_diff = self.consider_addition_flexible_hours(this, key, time_diff)
-                    print(f"time_diff ====== {time_diff}")
+                    # print(f"time_diff ====== {time_diff}")
                     actual_delay = time_diff
                     type = 'late_signin'
                     count += 1
                     ded_applied, penalty = self.check_penalty_rule_line(penalty_rule, time_diff, 'sign_in', this)
-                    print(f"dep_applied===={ded_applied}")
+                    # print(f"dep_applied===={ded_applied}")
                     deduction = ded_applied * per_hour
                     self.create_line(key, time_diff, type, penalty,
                                      permission, permission_hrs, actual_delay, ded_applied,
@@ -1619,11 +1636,11 @@ class employee_delay(models.Model):
         day_before = (date_strptime + datetime.timedelta(days=-1)).strftime('%Y-%m-%d')
         previous_day_ids = employee_delay_line_pool.search([('employee_delay_id', '=', employee_delay_id),
                                                             ('date', '=', day_before)])
-        print(f" previous days ids ======= {previous_day_ids.allowed_nextday}")
+        # print(f" previous days ids ======= {previous_day_ids.allowed_nextday}")
         if previous_day_ids:
             # allowed_time = employee_delay_line_pool.browse(previous_day_ids[0]).allowed_nextday
             allowed_time = sum(previous_day_ids.mapped("allowed_nextday"))
-            print(f" allowed_time ======= {allowed_time}")
+            # print(f" allowed_time ======= {allowed_time}")
         return allowed_time
 
 
@@ -1636,16 +1653,16 @@ class employee_delay(models.Model):
             ('employee_id', '=', this.employee_id.id),
             ('check_out', '>=', key + ' 00:00:01'),
             ('check_out', '<=', key + ' 23:59:59')], order="check_out DESC")
-        print(f"Last Attendance === > {last_att_ids}")
+        # print(f"Last Attendance === > {last_att_ids}")
         first_att_ids = attendance_pool.search([
             ('employee_id', '=', this.employee_id.id),
             ('check_in', '>=', key + ' 00:00:01'),
             ('check_in', '<=', key + ' 23:59:59')], order="check_in ASC")
         # time_zone = context.has_key("tz") and context['tz'] or "Africa/Cairo" if context else "Africa/Cairo"
-        print(f"First Attendance === > {first_att_ids}")
+        # print(f"First Attendance === > {first_att_ids}")
         if first_att_ids:
             sign_date = first_att_ids[0].check_in
-            print(f"First sign_date === > {sign_date}")
+            # print(f"First sign_date === > {sign_date}")
             sign_date = self.convert_datetime_to_tz(sign_date)
             first_signin = sign_date.split(' ')[1]
         if last_att_ids:
@@ -1674,8 +1691,7 @@ class employee_delay(models.Model):
              ('state', '=', 'validate'),
              ('date_from', '<=', date),
              ('date_to', '>=', date)], order="date_from ASC")
-        #
-        print(f'check_approved_leave.holiday_ids ================ {holiday_ids}')
+        # print(f'check_approved_leave.holiday_ids ================ {holiday_ids}')
 
         if holiday_ids:
             date_format = '%Y-%m-%d'
@@ -1684,9 +1700,9 @@ class employee_delay(models.Model):
             date_list = self.generate_date_dic(holiday_ids[0].date_from.strftime(date_format).split(' ')[0],
                                                holiday_ids[0].date_to.strftime(date_format).split(' ')[0],
                                                date_format)  # context.update({'date_list': date_list})
-            print(f'check_approved_leave.date_list ===== {date_list}')
+            # print(f'check_approved_leave.date_list ===== {date_list}')
             special_dates = list(set(special_dates + date_list))
-            print(f'check_approved_leave.special_dates ================ {special_dates}')
+            # print(f'check_approved_leave.special_dates ================ {special_dates}')
         return {'holiday_ids': holiday_ids, 'date_list': date_list}
 
     def check_permission_leave(self, employee_id, date):
