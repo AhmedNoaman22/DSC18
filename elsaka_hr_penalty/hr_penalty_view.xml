@@ -292,9 +292,10 @@
                             <group col="2">
                                 <group>
                                     <field name="total_late_deduction" />
+                                    <field name="total_absent_deduction" />
                                     <field name="total_waived_deduction" />
-                                    <field name="total_deduction" />
                                     <field name="target_deduction"/>
+                                    <field name="total_deduction" />
                                     <field name="has_ramadan" invisible="1"/>
                                 </group>
                                 <group>
@@ -322,12 +323,13 @@
                     <field name="employee_id" />
                     <field name="department_id" />
                     <field name="date_from" />
-                    <field name="date_to" />
+                    <field name="date_to"/>
                     <field name="total_late_deduction" />
+                    <field name="total_absent_deduction" />
                     <field name="total_waived_deduction" />
                     <field name="total_hours_deduction"/>
-                    <field name="total_deduction" />
                     <field name="target_deduction"/>
+                    <field name="total_deduction" />
                     <field name="state" />
                 </list>
             </field>

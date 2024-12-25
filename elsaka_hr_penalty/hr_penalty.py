@@ -428,6 +428,7 @@ class employee_delay(models.Model):
         for delay in self:
             deduction = 0.0
             waive = 0.0
+            absent = 0.0
             total_actual_delay = 0.0
             total_worked_hours = 0.0
             total_working = 0.0
@@ -498,10 +499,14 @@ class employee_delay(models.Model):
                 permission_list.append(delay_line.permission_hours)
                 travel_list.append(delay_line.travel_alw)
 
+                deduction += delay_line.deduction
                 if delay_line.waive:
                     waive += delay_line.deduction
                     continue
-                deduction += delay_line.deduction
+                if delay_line.type == 'absent':
+                    absent += delay_line.deduction
+                    continue
+
 
                 if delay_line.type in ['late_signin', 'late_signout']:
                     total_actual_delay += delay_line.time_diff
@@ -518,9 +523,9 @@ class employee_delay(models.Model):
             total_late_signin = delay.add_time(late_signin)
             total_early_signout = delay.add_time(early_signout)
 
-            delay.total_late_deduction = deduction
+            delay.total_late_deduction = deduction - absent
             delay.total_waived_deduction = waive
-            delay.total_deduction = deduction - waive
+            delay.total_absent_deduction = absent
             delay.total_actual_delay = total_actual_delay
             delay.total_worked_hours = total_worked_hours
             delay.total_working = total_working
@@ -555,6 +560,7 @@ class employee_delay(models.Model):
 
             delay.total_hours_deduction = total_hours_deduction
             delay.target_deduction = total_hours_deduction * per_hour_rate
+            delay.total_deduction = (deduction - waive) + delay.target_deduction
 
             print(f"per_hour_rate ====== {per_hour_rate}")
             print(f"total_hours_deduction ====== {total_hours_deduction}")
@@ -600,8 +606,9 @@ class employee_delay(models.Model):
     total_working = fields.Float(compute=_calc_all, string='Total Working', store=True,
                                  help="Working Total")
     total_waived_deduction = fields.Float(compute=_calc_all, string='Total Waived Deduction', store=True)
-    total_deduction = fields.Float(compute=_calc_all, string='Total Deduction', store=True)
+    total_absent_deduction = fields.Float(compute=_calc_all, string='Total Absent Deduction', store=True)
     target_deduction = fields.Float(compute=_calc_all, string='Target Deduction', store=True)
+    total_deduction = fields.Float(compute=_calc_all, string='Total Deduction', store=True)
     total_permission_hours = fields.Float(compute=_calc_all, string='Total Permission Hours', store=True)
     total_late_signin = fields.Float(compute=_calc_all, string='Total Late Sign-In', store=True)
     total_early_signout = fields.Float(compute=_calc_all, string='Total Early Sign-Out', store=True)
