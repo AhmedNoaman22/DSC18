@@ -62,8 +62,10 @@ class hr_payslip(models.Model):
         unpaid_leaves = 0.0
         absents = 0.0
         amount = 0.0
+        late_deduction = 0.0
         target_deduction = 0.0
         employee_delay_line_pool = self.env['employee.delay.line']
+        employee_delay_pool = self.env['employee.delay']
         for payslip in self:
             employee_delay_line_ids = employee_delay_line_pool.search([
                 ('employee_delay_id.employee_id', '=', payslip.employee_id.id),
@@ -72,6 +74,12 @@ class hr_payslip(models.Model):
                 ('employee_delay_id.state', '=', 'approved'),
                 ('waive', '=', False)])
             print('employee_delay_line_ids ', employee_delay_line_ids)
+            employee_delay_ids = employee_delay_pool.search([
+                ('employee_id', '=', payslip.employee_id.id),
+                ('date_from', '>=', payslip.date_from),
+                ('date_to', '<=', payslip.date_to),
+                ('state', '=', 'approved')])
+            print('employee_delay_ids ', employee_delay_ids)
 
             total_leave_days_amount = 0.0
             count_leaves_days = 0.0
@@ -90,6 +98,9 @@ class hr_payslip(models.Model):
                 count_attendance_days = employee_delay_line_ids[0].employee_delay_id.count_attendance_days
             print(f'total_leave_days_amount ===== {total_leave_days_amount}')
             print(f'count_leaves_days ===== {count_leaves_days}')
+            for ed in employee_delay_ids:
+                target_deduction += ed.target_deduction
+
             for edl in employee_delay_line_ids:
                 if edl.type in ['late_signin', 'no_signin']:
                     late_signin += edl.deduction
@@ -100,7 +111,7 @@ class hr_payslip(models.Model):
                 if edl.type in ['absent']:
                     absents += edl.deduction
                 if edl.type in ['late_signin', 'late_signout']:
-                    target_deduction += edl.deduction
+                    late_deduction += edl.deduction
 
             # mod = self.env['ir.model.data']
             input_line_ids = []
@@ -120,6 +131,10 @@ class hr_payslip(models.Model):
                 elif line.code == 'LATESIGNOUT':
                     # line.amount = late_signout
                     vals['amount'] = late_signout
+
+                elif line.code == 'TARGETDEDUCTION':
+                    # line.amount = count_leaves_days
+                    vals['amount'] = target_deduction
 
                 elif line.code == 'CLD':
                     # line.amount = count_leaves_days

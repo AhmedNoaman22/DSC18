@@ -421,13 +421,14 @@ class employee_delay(models.Model):
     #     return super(employee_delay, self)._track_subtype(init_values)
 
     # @api.one
-    @api.depends('employee_delay_line.deduction', 'employee_delay_line.time_diff', 'employee_delay_line.waive', 'state', 'employee_delay_line.working', 'employee_delay_line.worked_hours')
+    @api.depends('employee_id','employee_delay_line.deduction', 'employee_delay_line.time_diff', 'employee_delay_line.waive', 'state', 'employee_delay_line.working', 'employee_delay_line.worked_hours')
     def _calc_all(self):
         worked_dict = {}
         working_dict = {}
         for delay in self:
             deduction = 0.0
             waive = 0.0
+            absent = 0.0
             total_actual_delay = 0.0
             total_worked_hours = 0.0
             total_working = 0.0
@@ -498,10 +499,14 @@ class employee_delay(models.Model):
                 permission_list.append(delay_line.permission_hours)
                 travel_list.append(delay_line.travel_alw)
 
+                deduction += delay_line.deduction
                 if delay_line.waive:
                     waive += delay_line.deduction
                     continue
-                deduction += delay_line.deduction
+                if delay_line.type == 'absent':
+                    absent += delay_line.deduction
+                    continue
+
 
                 if delay_line.type in ['late_signin', 'late_signout']:
                     total_actual_delay += delay_line.time_diff
@@ -518,9 +523,9 @@ class employee_delay(models.Model):
             total_late_signin = delay.add_time(late_signin)
             total_early_signout = delay.add_time(early_signout)
 
-            delay.total_late_deduction = deduction
+            delay.total_late_deduction = deduction - absent
             delay.total_waived_deduction = waive
-            delay.total_deduction = deduction - waive
+            delay.total_absent_deduction = absent
             delay.total_actual_delay = total_actual_delay
             delay.total_worked_hours = total_worked_hours
             delay.total_working = total_working
@@ -548,13 +553,17 @@ class employee_delay(models.Model):
             #     print(f"target_subtract_working ====== {target_subtracted_working}")
             #     delay.target_deduction = target_subtracted_working * per_hour_rate * temp_target_dedcution
             # per_hour_rate = delay.get_employee_per_hour_rate(delay.employee_id, delay.date_from, delay.date_to, delay.has_ramadan)
-            per_hour_rate = delay.get_employee_per_hour_rate(delay.employee_id, delay.date_from, delay.date_to, delay.has_ramadan)
+            if delay.employee_id:
+                per_hour_rate = delay.get_employee_per_hour_rate(delay.employee_id, delay.date_from, delay.date_to, delay.has_ramadan)
+            else:
+                per_hour_rate = 0.0
             print(f' Per_hour_rate ======> {per_hour_rate}')
             total_hours_deduction = delay.total_actual_delay - ( delay.total_worked_hours -  delay.total_working )
             print(f' total_hours_deduction ======> {total_hours_deduction}')
 
             delay.total_hours_deduction = total_hours_deduction
             delay.target_deduction = total_hours_deduction * per_hour_rate
+            delay.total_deduction = (deduction - waive) + delay.target_deduction
 
             print(f"per_hour_rate ====== {per_hour_rate}")
             print(f"total_hours_deduction ====== {total_hours_deduction}")
@@ -600,8 +609,9 @@ class employee_delay(models.Model):
     total_working = fields.Float(compute=_calc_all, string='Total Working', store=True,
                                  help="Working Total")
     total_waived_deduction = fields.Float(compute=_calc_all, string='Total Waived Deduction', store=True)
-    total_deduction = fields.Float(compute=_calc_all, string='Total Deduction', store=True)
+    total_absent_deduction = fields.Float(compute=_calc_all, string='Total Absent Deduction', store=True)
     target_deduction = fields.Float(compute=_calc_all, string='Target Deduction', store=True)
+    total_deduction = fields.Float(compute=_calc_all, string='Total Deduction', store=True)
     total_permission_hours = fields.Float(compute=_calc_all, string='Total Permission Hours', store=True)
     total_late_signin = fields.Float(compute=_calc_all, string='Total Late Sign-In', store=True)
     total_early_signout = fields.Float(compute=_calc_all, string='Total Early Sign-Out', store=True)
@@ -1823,6 +1833,7 @@ class employee_delay(models.Model):
                                    has_ramadan=False):
         patch_delay_cal_pool = self.env['patch.delay.cal']
         assign_shift_line_ids = patch_delay_cal_pool.get_employee_shift(employee_id.id, date_from, date_to)
+        print(f"assign_shift_line_ids ====> {assign_shift_line_ids}")
         if not assign_shift_line_ids:
             raise UserError(_('Employee %s has no assigned shifts in period from %s To %s.' % (
                 employee_id.name, date_from, date_to)))
