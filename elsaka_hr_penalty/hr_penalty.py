@@ -559,14 +559,14 @@ class employee_delay(models.Model):
                 per_hour_rate = delay.get_employee_per_hour_rate(delay.employee_id, delay.date_from, delay.date_to, delay.has_ramadan)
             else:
                 per_hour_rate = 0.0
-            print(f' Per_hour_rate ======> {per_hour_rate}')
-            total_hours_deduction = (delay.total_actual_delay) - ( delay.total_worked_hours -  delay.total_working )
+            # print(f' Per_hour_rate ======> {per_hour_rate}')
+            total_hours_deduction = total_target_hours - total_worked_hours
             if total_hours_deduction < 0.0:
                 total_hours_deduction = -1 * total_hours_deduction
-            print(f' total_hours_deduction ======> {total_hours_deduction}')
-            # total_absent_hours = sum(delay.employee_delay_line.filtered(lambda r: r.type != 'absent').mapped('ded_applied'))
-            print(f' total_absent_hours ======> {total_absent_hours}')
-            delay.total_hours_deduction = total_hours_deduction + total_absent_hours
+            # print(f' total_hours_deduction ======> {total_hours_deduction}')
+            # # total_absent_hours = sum(delay.employee_delay_line.filtered(lambda r: r.type != 'absent').mapped('ded_applied'))
+            # print(f' total_absent_hours ======> {total_absent_hours}')
+            delay.total_hours_deduction = total_hours_deduction
             delay.target_deduction = total_hours_deduction * per_hour_rate
             delay.total_deduction = (deduction - waive) + delay.target_deduction
 
