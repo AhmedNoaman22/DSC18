@@ -512,16 +512,12 @@ class employee_delay(models.Model):
 
                 if delay_line.type in ['late_signin', 'late_signout']:
                     total_actual_delay += delay_line.time_diff
-                total_worked_hours +=  delay_line.worked_hours
-                total_working +=  delay_line.working
-            # total_worked_hours = delay.add_time(worked_dict.values())
-            # total_working = delay.add_time(working_dict.values())
 
-            # total_worked_hours = float(sum(worked_dict.values()))
-            # total_worked_hours = delay.revise_shift_ends(total_worked_hours)
+            total_worked_hours = float(sum(worked_dict.values()))
+            total_worked_hours = delay.revise_shift_ends(total_worked_hours)
 
-            # total_working = float(sum(working_dict.values()))
-            # total_working = delay.revise_shift_ends(total_working)
+            total_working = float(sum(working_dict.values()))
+            total_working = delay.revise_shift_ends(total_working)
             total_target_hours = delay.get_target_working_hours(delay.employee_id.id,
                                                                delay.date_from, delay.date_to)
             total_target_hours = delay.convert_time_to_float(total_target_hours)
