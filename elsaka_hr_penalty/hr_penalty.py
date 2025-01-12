@@ -494,7 +494,7 @@ class employee_delay(models.Model):
                         late_signin.append(delay_line.time_diff)
                     elif delay_line.type == 'late_signout' and not delay_line.waive:
                         early_signout.append(delay_line.time_diff)
-                #                 total_actual_delay += delay_line.time_diff
+                    # total_actual_delay += delay_line.time_diff
 
                 permission_list.append(delay_line.permission_hours)
                 travel_list.append(delay_line.travel_alw)
@@ -558,7 +558,11 @@ class employee_delay(models.Model):
             else:
                 per_hour_rate = 0.0
             print(f' Per_hour_rate ======> {per_hour_rate}')
-            total_hours_deduction = delay.total_actual_delay - ( delay.total_worked_hours -  delay.total_working )
+            total_absent_hours = sum(delay.employee_delay_line.filtered(lambda r: r.type != 'absent').mapped('ded_applied'))
+            print(f' total_absent_hours ======> {total_absent_hours}')
+            total_hours_deduction = (delay.total_actual_delay + total_absent_hours) - ( delay.total_worked_hours -  delay.total_working )
+            if total_hours_deduction < 0.0:
+                total_hours_deduction = -1 * total_hours_deduction
             print(f' total_hours_deduction ======> {total_hours_deduction}')
 
             delay.total_hours_deduction = total_hours_deduction
@@ -828,11 +832,11 @@ class employee_delay(models.Model):
                                 this.employee_id.name, key)))
                         per_hour = month_line_ids[0].per_hour
                     else:
-                        # per_hour = contract.gross and (contract.gross / (30 * shift_line.shift_id.total_working_hours))
-                        # or 0.0#Assuming 30 day of a month
+                        # per_hour = contract.gross and (contract.gross / (22 * shift_line.shift_id.total_working_hours))
+                        # or 0.0#Assuming 22 day of a month
                         per_hour = contract.gross and (contract.gross /
                                                        (
-                                                               30 * (
+                                                               22 * (
                                                                shift_line.shift_id.total_working_hours - shift_line.shift_id.break_hours))) or 0.0  # Assuming 22 day of a month
                 else:
                     per_hour = 0.0
