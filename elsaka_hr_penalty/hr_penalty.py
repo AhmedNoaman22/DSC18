@@ -1861,11 +1861,11 @@ class employee_delay(models.Model):
                             employee_id.name, date_from)))
                     per_hour = month_line_ids[0].per_hour
                 else:
-                    # per_hour = contract.gross and (contract.gross / (30 * shift_line.shift_id.total_working_hours))
-                    # or 0.0#Assuming 30 day of a month
+                    # per_hour = contract.gross and (contract.gross / (22 * shift_line.shift_id.total_working_hours))
+                    # or 0.0#Assuming 22 day of a month
                     per_hour = contract.gross and (contract.gross /
                                                    (
-                                                           30 * (
+                                                           22 * (
                                                            shift_line.shift_id.total_working_hours - shift_line.shift_id.break_hours))) or 0.0  # Assuming 22 day of a month
             else:
                 total_target = self.get_target_working_hours(employee_id.id,
