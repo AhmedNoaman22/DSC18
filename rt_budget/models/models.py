@@ -72,22 +72,15 @@ class BudgetLine(models.Model):
                 rec.hour_cost = 0.0
 
     def write(self, vals):
+        if vals.get('department_id'):
+            vals['hour_cost'] = self.department_id.hour_cost
         res = super(BudgetLine, self).write(vals)
-        for rec in self:
-            if 'department_id' in vals:
-                if rec.department_id:
-                    res['hour_cost'] = rec.department_id.hour_cost
-                else:
-                    res['hour_cost'] = 0.0
         return res
 
     def create(self, vals):
+        if 'department_id' in vals:
+            vals['hour_cost'] = self.department_id.hour_cost
         res = super(BudgetLine, self).create(vals)
-        for rec in self:
-            if 'department_id' in vals:
-                if rec.department_id:
-                    res['hour_cost'] = rec.department_id.hour_cost
-                else:
-                    res['hour_cost'] = 0.0
         return res
+
 
