@@ -568,7 +568,7 @@ class employee_delay(models.Model):
             # print(f' total_hours_deduction ======> {total_hours_deduction}')
             # # total_absent_hours = sum(delay.employee_delay_line.filtered(lambda r: r.type != 'absent').mapped('ded_applied'))
             # print(f' total_absent_hours ======> {total_absent_hours}')
-            delay.total_hours_deduction = total_hours_deduction
+            # delay.total_hours_deduction = total_hours_deduction
             delay.target_deduction = total_hours_deduction * per_hour_rate
             delay.total_deduction = (deduction - waive) + delay.target_deduction
 
