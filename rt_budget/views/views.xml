@@ -37,7 +37,7 @@
                                         <field name="amount_planing_hours"/>
                                         <field name="task_planned_hours"/>
                                         <field name="multiplier" force-save="1"/>
-                                        <field name="hour_cost"/>
+                                        <field name="hour_cost" force-save="1"/>
                                         <field name="actually_cost_hour"/>
                                         <field name="amount_actually_hours"/>
                                         <field name="actually_time_sheet_hour"/>
