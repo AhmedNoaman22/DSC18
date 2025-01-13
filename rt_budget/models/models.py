@@ -73,13 +73,13 @@ class BudgetLine(models.Model):
 
     def write(self, vals):
         if vals.get('department_id'):
-            vals['hour_cost'] = self.department_id.hour_cost
+            vals['hour_cost'] = vals['department_id'].hour_cost
         res = super(BudgetLine, self).write(vals)
         return res
 
     def create(self, vals):
         if 'department_id' in vals:
-            vals['hour_cost'] = self.department_id.hour_cost
+            vals['hour_cost'] = vals['department_id'].hour_cost
         res = super(BudgetLine, self).create(vals)
         return res
 
