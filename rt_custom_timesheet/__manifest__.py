@@ -18,7 +18,7 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base','sale'],
+    'depends': ['base', 'hr_timesheet', 'hr_attendance'],
 
     # always loaded
     'data': [
