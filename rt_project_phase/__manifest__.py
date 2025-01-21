@@ -13,7 +13,6 @@
     'author': "Rightechs Solutions",
     'website': "https://www.rightechs.net",
 
-    # for the full list
     'category': 'Project',
     'version': '1.0',
 
@@ -23,7 +22,6 @@
         'sale', 'sale_project', 'timesheet_grid',
         'purchase', 'account_accountant'],
 
-    # always loaded
     'data': [
         'security/ir.model.access.csv',
         'data/project_phase_sequence_data.xml',

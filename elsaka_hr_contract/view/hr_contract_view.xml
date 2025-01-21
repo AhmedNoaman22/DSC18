@@ -12,6 +12,8 @@
                        position="inside">
                     <field name="basic_insurance" readonly="state in ['open', 'close']"/>
                     <field name="variable_insurance" readonly="state in ['open', 'close']"/>
+                    <field name="tax" readonly="state in ['open', 'close']"/>
+                    <field name="total_salary"/>
                     <field name="holiday_start_date" readonly="state in ['open', 'close']"/>
                 </xpath>
                 <xpath expr="//page[@name='information']/group[@name='salary_info']/group[@name='salary']/div[@name='wage']"
@@ -31,6 +33,9 @@
             <field name="arch" type="xml">
                 <field name="job_id" position="after">
                     <field name="department_id"/>
+                </field>
+                <field name="wage" position="after">
+                    <field name="total_salary" optional="hide"/>
                 </field>
             </field>
         </record>

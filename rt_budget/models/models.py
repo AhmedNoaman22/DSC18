@@ -49,7 +49,7 @@ class BudgetLine(models.Model):
     name = fields.Char(string="Name")
     budget_id = fields.Many2one('project.budget', string="Budget")
     department_id = fields.Many2one(comodel_name="hr.department", string="Department")
-    hour_cost = fields.Float(string='Department Hour Cost', related="department_id.hour_cost", store=True)
+    hour_cost = fields.Float(string='Department Hour Cost', readonly=True,  default=0.0)
     task_planned_hours = fields.Float(string='Budget Hours')
     actually_time_sheet_hour = fields.Float(string='Timesheets Hours')
     actually_cost_hour = fields.Float(string='Actually Cost')
@@ -62,3 +62,34 @@ class BudgetLine(models.Model):
     amount_actually_hours = fields.Float(string='Total Cost')
 
     note = fields.Char(string='Note')
+
+    @api.onchange('department_id')
+    def _onchange_department(self):
+        for rec in self:
+            if rec.department_id:
+                rec.hour_cost = rec.department_id.hour_cost
+    #
+    # @api.model_create_multi
+    # def create(self, vals_list):
+    #     for val in vals_list:
+    #         if val and 'department_id' in val:
+    #             if val['department_id']:
+    #                 department = self.env['hr.department'].sudo().search([('id', '=', val['department_id'])])
+    #                 val['hour_cost'] = department.hour_cost
+    #             else:
+    #                 val['hour_cost'] = 0.0
+    #         res = super(BudgetLine, self).create(val)
+    #         print('======= res', res)
+    #         return res
+    #
+    # def write(self, val):
+    #     if val and 'department_id' in val:
+    #         if val['department_id']:
+    #             department = self.env['hr.department'].sudo().search([('id', '=', val['department_id'])])
+    #             val['hour_cost'] = department.hour_cost
+    #         else:
+    #             val['hour_cost'] = 0.0
+    #     res = super(BudgetLine, self).write(val)
+    #     print('======= res', res)
+    #     return res
+    # #
