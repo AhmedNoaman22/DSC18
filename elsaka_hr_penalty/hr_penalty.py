@@ -1834,6 +1834,74 @@ class employee_delay(models.Model):
         worked_hours = self.revise_shift_ends(worked_hours)
         return worked_hours
 
+    def consider_break_time(self, employee_id, key, break_lines, working, context=None):
+        if context is None: context = {}
+        if working <= 0.0: return working
+        if len(break_lines) != 1: return working
+        breakin = break_lines[0].from_period
+        breakout = break_lines[0].to_period
+        # print "BREAK NAME, FROM , TO: ===> ",break_lines[0].name,working
+        att_pool = self.pool.get('hr.attendance')
+        in_att_ids = att_pool.search([
+            ('employee_id', '=', employee_id),
+            ('check_in', '>=', key + ' 00:00:01'),
+            ('check_in', '<=', key + ' 23:59:59')], order="check_in ASC")
+        out_att_ids = att_pool.search([
+            ('employee_id', '=', employee_id),
+            ('check_out', '>=', key + ' 00:00:01'),
+            ('check_out', '<=', key + ' 23:59:59')], order="check_out ASC")
+
+        print('in_att_ids ==============> ', in_att_ids)
+        print('out_att_ids ==============> ', out_att_ids)
+        if len(in_att_ids) != len(out_att_ids) or len(in_att_ids) <= 1 or len(out_att_ids) <= 1:
+            return working
+        time_diff = 0.0
+        in_att_ids.pop(0)
+        out_att_ids.pop(len(out_att_ids) - 1)
+        for x in range(0, len(in_att_ids)):
+            out_time = self.convert_datetime_to_tz(att_pool.browse(out_att_ids[x]).name, context)
+            in_time = self.convert_datetime_to_tz(att_pool.browse(in_att_ids[x]).name, context)
+            out_time = float(out_time.split(' ')[1][:5].replace(':', '.'))
+            in_time = float(in_time.split(' ')[1][:5].replace(':', '.'))
+            #             print "@ out_time,in_time, breakin, breakout: =============> ",out_time,in_time,breakin,breakout
+            if out_time >= breakin and out_time <= breakout or in_time <= breakin and in_time <= breakout:
+                pass
+            else:
+                # BREAK TAKEN BEFORE/AFTER OFFICIAL BREAK TIME JUST NEGLECT
+                print("0. ITS OUT OF TIME : =========> ", out_time, in_time, breakin, breakout, time_diff, working)
+                continue
+
+            print('BREAK-IN ============> ', breakin)
+            print('in_time-IN ============> ', in_time)
+            print('BREAK-OUT ============> ', breakout)
+            print('out_time-OUT ============> ', out_time)
+            if breakin == out_time and in_time == breakout:
+                time_diff = self.convert_float_to_time(breakin, breakout)
+                time_diff = self.revise_shift_ends(time_diff)
+                print("1 : =============> ", out_time, in_time, breakin, breakout, time_diff, working)
+            elif out_time >= breakin and in_time <= breakout and out_time < in_time:
+                time_diff = self.convert_float_to_time(out_time, in_time)
+                time_diff = self.revise_shift_ends(time_diff)
+                print("2 : =============> ", out_time, in_time, breakin, breakout, time_diff, working)
+            elif out_time >= breakin and in_time >= breakout and out_time < breakout:
+                time_diff = self.convert_float_to_time(out_time, breakout)
+                time_diff = self.revise_shift_ends(time_diff)
+                print("3 : =============> ", out_time, in_time, breakin, breakout, time_diff, working)
+            elif out_time <= breakin and in_time <= breakout and breakin < in_time:
+                time_diff = self.convert_float_to_time(breakin, in_time)
+                time_diff = self.revise_shift_ends(time_diff)
+                if time_diff < working:
+                    working = self.convert_float_to_time(time_diff, working)
+                    working = self.revise_shift_ends(working)
+                print("4 : =============> ", out_time, in_time, breakin, breakout, time_diff, working)
+            else:
+                print("5 : =============> ", out_time, in_time, breakin, breakout, time_diff, working)
+                pass
+            #         working = self.revise_shift_ends(working + time_diff)
+            working = self.add_time([working, time_diff])
+        print("FINAL. XXXXXX working: =============> ", working)
+        return working
+
     def get_employee_per_hour_rate(self, employee_id, date_from, date_to,
                                    has_ramadan=False):
         patch_delay_cal_pool = self.env['patch.delay.cal']
