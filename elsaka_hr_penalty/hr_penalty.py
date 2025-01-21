@@ -1841,7 +1841,7 @@ class employee_delay(models.Model):
         breakin = break_lines[0].from_period
         breakout = break_lines[0].to_period
         # print "BREAK NAME, FROM , TO: ===> ",break_lines[0].name,working
-        att_pool = self.pool.get('hr.attendance')
+        att_pool = self.env['hr.attendance']
         in_att_ids = att_pool.search([
             ('employee_id', '=', employee_id),
             ('check_in', '>=', key + ' 00:00:01'),
@@ -1849,7 +1849,7 @@ class employee_delay(models.Model):
         out_att_ids = att_pool.search([
             ('employee_id', '=', employee_id),
             ('check_out', '>=', key + ' 00:00:01'),
-            ('check_out', '<=', key + ' 23:59:59')], order="check_out ASC")
+            ('check_out', '<=', key + ' 23:59:59')], order="check_out DESC")
 
         print('in_att_ids ==============> ', in_att_ids)
         print('out_att_ids ==============> ', out_att_ids)
