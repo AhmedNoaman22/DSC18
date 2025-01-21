@@ -1859,11 +1859,26 @@ class employee_delay(models.Model):
             return working
         time_diff = 0.0
         if in_att_ids:
-            in_att_ids = in_att_ids.search([('id','!=',in_att_ids[0].id)])
-        _logger.info(f'========in_att_ids after=== {in_att_ids}')
+            _logger.info(f'========in_att_ids [0]=== {in_att_ids[0].id}')
+            check_in_data = att_pool.search([
+            ('employee_id', '=', employee_id),
+            ('check_in', '>=', key + ' 00:00:01'),
+            ('check_in', '<=', key + ' 23:59:59'),
+            ('id','!=',in_att_ids[0].id)], order="check_in ASC")
+            in_att_ids = check_in_data
+            _logger.info(f'========check_in_data after=== {check_in_data}')
+            _logger.info(f'========in_att_ids after=== {in_att_ids}')
         if out_att_ids:
-            out_att_ids = out_att_ids.search([('id','!=',out_att_ids[len(out_att_ids) - 1].id)])
-        _logger.info(f'========out_att_ids after=== {out_att_ids}')
+            # out_att_ids = out_att_ids.search([('id','!=',out_att_ids[len(out_att_ids) - 1].id)])
+            check_out_data = att_pool.search([
+            ('employee_id', '=', employee_id),
+            ('check_out', '>=', key + ' 00:00:01'),
+            ('check_out', '<=', key + ' 23:59:59'),
+            ('id','!=',out_att_ids[len(out_att_ids) - 1].id)], order="check_out DESC")
+            out_att_ids = check_out_data
+            _logger.info(f'========check_out_data after=== {check_out_data}')
+            _logger.info(f'========in_att_ids after=== {out_att_ids}')
+            _logger.info(f'========out_att_ids after=== {out_att_ids}')
         for x in range(0, len(in_att_ids)):
             out_time = self.convert_datetime_to_tz(out_att_ids[x].check_out)
             in_time = self.convert_datetime_to_tz(in_att_ids[x].check_in)
