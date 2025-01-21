@@ -1178,8 +1178,8 @@ class employee_delay(models.Model):
                                     signout_penalty = 0.0
 
                 # APPLY BREAK DEDUCTION
-                # if shift_line.shift_id.rest_period_ids:
-                #     self.apply_break_deduction(key, value, shift_line.shift_id, penalty_rule, per_hour)
+                if shift_line.shift_id.rest_period_ids:
+                    self.apply_break_deduction(key, value, shift_line.shift_id, penalty_rule, per_hour)
 
                 if not signin_penalty and not signout_penalty:
                     time_diff = 0.0
@@ -1288,60 +1288,60 @@ class employee_delay(models.Model):
 
 
 
-    # def apply_break_deduction(self, key, value, shift, penalty_rule, per_hour):
-    #     #         print "key, value: ==========> ",key, value
-    #     attendance_pool = self.env['hr.attendance']
-    #
-    #     if len(value) == 1 or not shift.rest_period_ids:
-    #         return True
-    #     elif len(value) >= 2:
-    #         value = attendance_pool.search([('id', 'in', [x.id for x in value])], order='check_in ASC')
-    #         for index in range(0, len(value)):
-    #             flag = False
-    #             if index + 1 == len(value):
-    #                 continue
-    #             break_in = self.get_float_time(value[index].check_out)
-    #             break_out = self.get_float_time(value[index + 1].check_in)
-    #
-    #             for rest_period in shift.rest_period_ids:
-    #                 rest_start = rest_period.from_period
-    #                 rest_end = rest_period.to_period
-    #                 if rest_start >= break_in and rest_start <= break_out or rest_end >= break_in and rest_end <= break_out:
-    #                     flag = True
-    #                     #                         print "rest_start,break_in: ===========> ",rest_start,rest_end,break_in,break_out
-    #                     if rest_start > break_in:
-    #                         break_in_penalty = self.convert_float_to_time(break_in, rest_start)
-    #                         break_in_penalty = self.revise_shift_ends(break_in_penalty)
-    #                         #                             print "break_in_penalty: ===========> ",break_in_penalty
-    #                         type = 'early_breakin'
-    #                         action = 'break_in'
-    #                         ded_applied, penalty = self.check_penalty_rule_line(penalty_rule, break_in_penalty, action,
-    #                                                                             self)
-    #                         deduction = ded_applied * per_hour
-    #                         self.create_line(key, break_in_penalty, type, penalty, 'no', 0.0,
-    #                                          break_in_penalty, ded_applied, deduction)
-    #                     if rest_end < break_out:
-    #                         break_out_penalty = self.convert_float_to_time(rest_end, break_out)
-    #                         break_out_penalty = self.revise_shift_ends(break_out_penalty)
-    #                         #                             print "break_out_penalty: ===========> ",break_out_penalty
-    #                         type = 'late_breakout'
-    #                         action = 'break_out'
-    #                         ded_applied, penalty = self.check_penalty_rule_line(penalty_rule, break_out_penalty, action,
-    #                                                                             self)
-    #
-    #                         deduction = ded_applied * per_hour
-    #                         self.create_line(key, break_out_penalty, type, penalty, 'no', 0.0,
-    #                                          break_out_penalty, ded_applied, deduction)
-    #                 if not flag:
-    #                     #                     print "break_in, break_out: ==========> ",break_in, break_out
-    #                     break_in_penalty = self.convert_float_to_time(break_in, break_out)
-    #                     break_in_penalty = self.revise_shift_ends(break_in_penalty)
-    #                     type = 'early_breakin'
-    #                     action = 'break_in'
-    #                     ded_applied, penalty = self.check_penalty_rule_line(penalty_rule, break_in_penalty, action, self)
-    #                     deduction = ded_applied * per_hour
-    #                     self.create_line(key, break_in_penalty, type, penalty, 'no', 0.0,
-    #                                      break_in_penalty, ded_applied, deduction)
+    def apply_break_deduction(self, key, value, shift, penalty_rule, per_hour):
+        #         print "key, value: ==========> ",key, value
+        attendance_pool = self.env['hr.attendance']
+
+        if len(value) == 1 or not shift.rest_period_ids:
+            return True
+        elif len(value) >= 2:
+            value = attendance_pool.search([('id', 'in', [x.id for x in value])], order='check_in ASC')
+            for index in range(0, len(value)):
+                flag = False
+                if index + 1 == len(value):
+                    continue
+                break_in = self.get_float_time(value[index].check_out)
+                break_out = self.get_float_time(value[index + 1].check_in)
+
+                for rest_period in shift.rest_period_ids:
+                    rest_start = rest_period.from_period
+                    rest_end = rest_period.to_period
+                    if rest_start >= break_in and rest_start <= break_out or rest_end >= break_in and rest_end <= break_out:
+                        flag = True
+                        #                         print "rest_start,break_in: ===========> ",rest_start,rest_end,break_in,break_out
+                        if rest_start > break_in:
+                            break_in_penalty = self.convert_float_to_time(break_in, rest_start)
+                            break_in_penalty = self.revise_shift_ends(break_in_penalty)
+                            #                             print "break_in_penalty: ===========> ",break_in_penalty
+                            type = 'early_breakin'
+                            action = 'break_in'
+                            ded_applied, penalty = self.check_penalty_rule_line(penalty_rule, break_in_penalty, action,
+                                                                                self)
+                            deduction = ded_applied * per_hour
+                            self.create_line(key, break_in_penalty, type, penalty, 'no', 0.0,
+                                             break_in_penalty, ded_applied, deduction)
+                        if rest_end < break_out:
+                            break_out_penalty = self.convert_float_to_time(rest_end, break_out)
+                            break_out_penalty = self.revise_shift_ends(break_out_penalty)
+                            #                             print "break_out_penalty: ===========> ",break_out_penalty
+                            type = 'late_breakout'
+                            action = 'break_out'
+                            ded_applied, penalty = self.check_penalty_rule_line(penalty_rule, break_out_penalty, action,
+                                                                                self)
+
+                            deduction = ded_applied * per_hour
+                            self.create_line(key, break_out_penalty, type, penalty, 'no', 0.0,
+                                             break_out_penalty, ded_applied, deduction)
+                    if not flag:
+                        #                     print "break_in, break_out: ==========> ",break_in, break_out
+                        break_in_penalty = self.convert_float_to_time(break_in, break_out)
+                        break_in_penalty = self.revise_shift_ends(break_in_penalty)
+                        type = 'early_breakin'
+                        action = 'break_in'
+                        ded_applied, penalty = self.check_penalty_rule_line(penalty_rule, break_in_penalty, action, self)
+                        deduction = ded_applied * per_hour
+                        self.create_line(key, break_in_penalty, type, penalty, 'no', 0.0,
+                                         break_in_penalty, ded_applied, deduction)
 
     def add_time(self, x):
         ''' WHERE X is list of time as float '''
@@ -1853,16 +1853,20 @@ class employee_delay(models.Model):
 
         print('in_att_ids ==============> ', in_att_ids)
         print('out_att_ids ==============> ', out_att_ids)
+        _logger.info(f'========in_att_ids === {in_att_ids}')
+        _logger.info(f'========out_att_ids === {out_att_ids}')
         if len(in_att_ids) != len(out_att_ids) or len(in_att_ids) <= 1 or len(out_att_ids) <= 1:
             return working
         time_diff = 0.0
         if in_att_ids:
-            in_att_ids.pop(0)
+            in_att_ids = in_att_ids.search([('id','!=',in_att_ids[0].id)])
+        _logger.info(f'========in_att_ids after=== {in_att_ids}')
         if out_att_ids:
-            out_att_ids.pop(len(out_att_ids) - 1)
+            out_att_ids = out_att_ids.search([('id','!=',out_att_ids[len(out_att_ids) - 1].id)])
+        _logger.info(f'========out_att_ids after=== {out_att_ids}')
         for x in range(0, len(in_att_ids)):
-            out_time = self.convert_datetime_to_tz(att_pool.browse(out_att_ids[x]).name, context)
-            in_time = self.convert_datetime_to_tz(att_pool.browse(in_att_ids[x]).name, context)
+            out_time = self.convert_datetime_to_tz(out_att_ids[x].check_out)
+            in_time = self.convert_datetime_to_tz(in_att_ids[x].check_in)
             out_time = float(out_time.split(' ')[1][:5].replace(':', '.'))
             in_time = float(in_time.split(' ')[1][:5].replace(':', '.'))
             #             print "@ out_time,in_time, breakin, breakout: =============> ",out_time,in_time,breakin,breakout
