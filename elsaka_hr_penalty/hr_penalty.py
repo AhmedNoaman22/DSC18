@@ -1856,8 +1856,10 @@ class employee_delay(models.Model):
         if len(in_att_ids) != len(out_att_ids) or len(in_att_ids) <= 1 or len(out_att_ids) <= 1:
             return working
         time_diff = 0.0
-        in_att_ids.pop(0)
-        out_att_ids.pop(len(out_att_ids) - 1)
+        if in_att_ids:
+            in_att_ids.pop(0)
+        if out_att_ids:
+            out_att_ids.pop(len(out_att_ids) - 1)
         for x in range(0, len(in_att_ids)):
             out_time = self.convert_datetime_to_tz(att_pool.browse(out_att_ids[x]).name, context)
             in_time = self.convert_datetime_to_tz(att_pool.browse(in_att_ids[x]).name, context)
